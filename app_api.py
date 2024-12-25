@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(
-    title="GraphRAG Kit API",
+    title="GraphRAG WebUI API",
     version=config.app_version,
-    terms_of_service="https://github.com/TheodoreNiu/graphrag_kit",
+    terms_of_service="https://github.com/TheodoreNiu/graphrag_webui",
     license_info={
         "name": "MIT",
         "url": "https://opensource.org/licenses/MIT",

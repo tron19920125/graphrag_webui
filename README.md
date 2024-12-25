@@ -1,4 +1,4 @@
-# GraphRAG Kit
+# GraphRAG WebUI
 
 A web interface for [GraphRAG](https://github.com/microsoft/graphrag).
 
@@ -39,7 +39,7 @@ When the applications are started, you will have access to 3 URLs:
 - Test App: http://localhost:9001/
 - API Documentation: http://localhost:9002/docs
 
-## Update GraphRAG Kit
+## Update GraphRAG WebUI
 
 ```bash
 bash update.sh

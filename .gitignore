@@ -9,7 +9,7 @@ __pycache__/
 cache
 data/*
 pdf_cache/*
-graphrag_kit.service
+graphrag_webui.service
 config.yaml
 .idea
 logs/*

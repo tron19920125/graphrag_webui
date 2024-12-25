@@ -2,4 +2,4 @@
 
 set -e
 
-sudo journalctl -u graphrag_kit -f
+sudo journalctl -u graphrag_webui -f
