@@ -1,4 +1,4 @@
-graphrag==0.9.0
+graphrag==1.0.1
 streamlit==1.41.1
 theodoretools==0.0.11
 python-dotenv~=1.0.1
