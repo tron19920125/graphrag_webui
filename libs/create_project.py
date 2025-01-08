@@ -37,12 +37,14 @@ def overwrite_settings_yaml(root, new_project_name):
             )
             f.write(new_settings_yaml)
 
+
 def overwrite_settings_env(root):
     settings_env = f"{root}/.env"
-    template_settings_env = f"/app/.env.example"
+    template_settings_env = f"/app/template/.env"
     with open(template_settings_env, "r") as t:
         with open(settings_env, "w") as f:
             f.write(t.read())
+
 
 def create_project():
     project_name_list = get_project_names()

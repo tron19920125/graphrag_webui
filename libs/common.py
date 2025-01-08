@@ -59,14 +59,6 @@ def list_files_and_sizes(directory: str):
     return file_list
 
 
-def debug(data: any, title: str = ""):
-    return
-    if config.is_debug:
-        if title:
-            st.warning(title)
-        st.warning(data)
-
-
 def is_admin():
     if not os.path.exists("./config.yaml"):
         return True
@@ -108,7 +100,6 @@ def project_name_exists(project_name: str):
 
 def get_project_names():
     project_name_path = "/app/projects"
-    debug(f"scan to find versions in {project_name_path}")
     projects = list_subdirectories(project_name_path)
     if is_admin():
         return projects
@@ -117,9 +108,6 @@ def get_project_names():
 
 
 def run_command(command: str, output: bool = False):
-
-    debug(f"run command: {command}")
-
     process = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )

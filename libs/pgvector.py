@@ -5,13 +5,13 @@ from typing import Any
 import psycopg2
 import streamlit as st
 import libs.config as config
-from libs.common import debug
 from graphrag.model.types import TextEmbedder
 from graphrag.vector_stores import (
     BaseVectorStore,
     VectorStoreDocument,
     VectorStoreSearchResult,
 )
+
 
 class PgVectorStore(BaseVectorStore):
     """The Pg vector storage implementation."""
@@ -26,30 +26,32 @@ class PgVectorStore(BaseVectorStore):
         port = kwargs.get("port", "5432")
 
         db_params = {
-            'dbname': dbname,
-            'user': user,
-            'password': password,
-            'host': host,
-            'port': port
+            "dbname": dbname,
+            "user": user,
+            "password": password,
+            "host": host,
+            "port": port,
         }
 
         self.conn = psycopg2.connect(**db_params)
         self.cur = self.conn.cursor()
 
     def load_documents(
-            self, documents: list[VectorStoreDocument], overwrite: bool = True
+        self, documents: list[VectorStoreDocument], overwrite: bool = True
     ) -> None:
         """Load documents into vector storage."""
 
         raws = []
         for document in documents:
             if document.vector is not None:
-                raws.append({
-                    "id": document.id,
-                    "text": document.text,
-                    "vector": document.vector,
-                    "attributes": json.dumps(document.attributes)
-                })
+                raws.append(
+                    {
+                        "id": document.id,
+                        "text": document.text,
+                        "vector": document.vector,
+                        "attributes": json.dumps(document.attributes),
+                    }
+                )
 
         if len(raws) == 0:
             raws = None
@@ -117,7 +119,6 @@ CREATE TABLE IF NOT EXISTS {self.collection_name} (
         try:
             self.cur.executemany(query, rows)
             self.conn.commit()
-            debug(f"Uploaded {len(rows)} items")
         except Exception as e:
             self.conn.rollback()
             print(e)
@@ -126,7 +127,7 @@ CREATE TABLE IF NOT EXISTS {self.collection_name} (
     def insert_data(self, raws) -> None:
         batch = []
         for raw in raws:
-            current = (raw['id'], raw['text'], str(raw['vector']), raw['attributes'])
+            current = (raw["id"], raw["text"], str(raw["vector"]), raw["attributes"])
             if len(batch) < 200:
                 batch.append(current)
             else:
@@ -151,7 +152,7 @@ CREATE TABLE IF NOT EXISTS {self.collection_name} (
         return self.query_filter
 
     def similarity_search_by_vector(
-            self, query_embedding: list[float], k: int = 10, **kwargs: Any
+        self, query_embedding: list[float], k: int = 10, **kwargs: Any
     ) -> list[VectorStoreSearchResult]:
         """Perform a vector-based similarity search."""
 
@@ -181,12 +182,14 @@ LIMIT {k};
             attributes = result[3]
             distance = result[4]
 
-            ids.append({
-                "id": id,
-                "text": text,
-                "distance": distance,
-                "attributes": attributes,
-            })
+            ids.append(
+                {
+                    "id": id,
+                    "text": text,
+                    "distance": distance,
+                    "attributes": attributes,
+                }
+            )
 
             docs.append(
                 VectorStoreSearchResult(
@@ -203,7 +206,7 @@ LIMIT {k};
         return docs
 
     def similarity_search_by_text(
-            self, text: str, text_embedder: TextEmbedder, k: int = 10, **kwargs: Any
+        self, text: str, text_embedder: TextEmbedder, k: int = 10, **kwargs: Any
     ) -> list[VectorStoreSearchResult]:
         """Perform a similarity search using a given input text."""
 

@@ -12,7 +12,6 @@ app_started_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 app_name = "graphrag"
 
 is_debug = os.getenv("DEBUG_MODE") == "true"
-api_key = os.getenv("API_KEY", "api_key")
 update_time = os.getenv("UPDATE_TIME", time.strftime("%Y-%m-%d %H:%M:%S"))
 
 generate_data_vision = "GPT Vision"

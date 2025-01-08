@@ -1,13 +1,14 @@
 import os
 from fastapi.responses import FileResponse
 from libs.find_sources import get_query_sources
-from libs.common import project_path
+from libs.common import project_path, load_project_env
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import libs.config as config
 from graphrag.cli.query import run_local_search, run_global_search, run_drift_search
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -62,12 +63,17 @@ def set_local_search_cache(item: Item, result: any):
     local_search_cache[item.query] = result
 
 
+def check_api_key(project_name: str, api_key: str):
+    load_project_env(project_name)
+    if os.getenv("API_KEY") and os.getenv("API_KEY") != api_key:
+        raise Exception("Invalid api-key")
+
+
 # -----------------------------------------------------------------
 @app.post("/api/local_search")
 def local_search(item: Item, api_key: str = Header(...)):
     try:
-        if config.api_key != api_key:
-            raise Exception("Invalid api-key")
+        check_api_key(item.project_name, api_key)
 
         cached_result = get_local_search_cache(item)
         if cached_result:
@@ -108,8 +114,7 @@ def local_search(item: Item, api_key: str = Header(...)):
 @app.post("/api/global_search")
 def global_search(item: Item, api_key: str = Header(...)):
     try:
-        if config.api_key != api_key:
-            raise Exception("Invalid api-key")
+        check_api_key(item.project_name, api_key)
 
         (response, context_data) = run_global_search(
             root_dir=project_path(item.project_name),
@@ -139,10 +144,9 @@ def global_search(item: Item, api_key: str = Header(...)):
 
 
 @app.post("/api/drift_search")
-def global_search(item: Item, api_key: str = Header(...)):
+def drift_search(item: Item, api_key: str = Header(...)):
     try:
-        if config.api_key != api_key:
-            raise Exception("Invalid api-key")
+        check_api_key(item.project_name, api_key)
 
         (response, context_data) = run_drift_search(
             root_dir=project_path(item.project_name),

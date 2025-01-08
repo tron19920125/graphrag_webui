@@ -32,13 +32,13 @@ class PageTask:
         self.ai_txt_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png.{self.pdf_vision_option_format}.txt"
         self.page_num = page_num
 
-        config = load_graphrag_config(project_name)
+        graphrag_config = load_graphrag_config(project_name)
 
         self.client = AzureOpenAI(
-            api_version=config.llm.api_version,
-            azure_endpoint=config.llm.api_base,
-            azure_deployment=config.llm.deployment_name,
-            api_key=config.llm.api_key,
+            api_version=graphrag_config.llm.api_version,
+            azure_endpoint=graphrag_config.llm.api_base,
+            azure_deployment=graphrag_config.llm.deployment_name,
+            api_key=graphrag_config.llm.api_key,
         )
 
     def page_to_image(self):
