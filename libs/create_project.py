@@ -37,6 +37,12 @@ def overwrite_settings_yaml(root, new_project_name):
             )
             f.write(new_settings_yaml)
 
+def overwrite_settings_env(root):
+    settings_env = f"{root}/.env"
+    template_settings_env = f"/app/.env.example"
+    with open(template_settings_env, "r") as t:
+        with open(settings_env, "w") as f:
+            f.write(t.read())
 
 def create_project():
     project_name_list = get_project_names()
@@ -70,6 +76,7 @@ def create_project():
             if copy_from_project_name == new_project_value:
                 initialize_project(path=root)
                 overwrite_settings_yaml(root, formatted_project_name)
+                overwrite_settings_env(root)
             else:
                 copy_project(copy_from_project_name, formatted_project_name)
         except Exception as e:

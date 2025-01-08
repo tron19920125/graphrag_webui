@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-from datashaper import WorkflowCallbacks
 import graphrag.api as api
 import streamlit as st
 
@@ -12,28 +11,18 @@ from libs.print_progress import PrintProgressLogger
 def build_index(project_name: str):
 
     if st.button("Start Build", key="build_index_" + project_name, icon="🚀"):
+        config = load_graphrag_config(project_name)
+        st.info("Config:")
+        st.json(config, expanded=False)
+
         with st.spinner("Building index..."):
-
-            progress_reporter = PrintProgressLogger("")
-            config = load_graphrag_config(project_name)
-
-            st.json(config, expanded=False)
-
-            # TODO: will support this in the future
-            # workflow_callbacks = [
-            #     WorkflowCallbacks(
-            #         on_progress=lambda progress: st.write(progress)
-            #     )
-            # ]
-
             asyncio.run(
                 api.build_index(
                     config=config,
                     run_id="",
                     is_resume_run=False,
                     memory_profile=False,
-                    progress_logger=progress_reporter,
-                    # callbacks=workflow_callbacks,
+                    progress_logger=PrintProgressLogger(""),
                 )
             )
 

@@ -6,6 +6,8 @@ if [ -f .env ]; then
   source .env
 fi
 
+APP_NAME=$1
+
 if [ -z "$APP_NAME" ]; then
   echo "APP_NAME is not set"
   exit 1
