@@ -27,7 +27,6 @@ def build_index(project_name: str):
                 )
             )
 
-    st.markdown("----------------------------")
     cache_size_mb = get_directory_size(f"/app/projects/{project_name}/cache")
     if cache_size_mb > 0:
         st.write(f"Cache size: {cache_size_mb} MB")

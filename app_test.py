@@ -1,7 +1,5 @@
-import json
 import os
 import streamlit as st
-from dotenv import load_dotenv
 import io
 from libs.find_sources import get_query_sources
 from libs.render_context import (
@@ -14,15 +12,11 @@ from libs.render_context import (
 from libs.save_settings import set_settings
 from libs.common import get_project_names, project_path, restart_component
 import pandas as pd
-import libs.config as config
 from graphrag.cli.query import run_local_search, run_global_search, run_drift_search
-from openai import AzureOpenAI
 import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 from libs.render_excel import render_excel_file
-
-load_dotenv()
 
 
 def page():

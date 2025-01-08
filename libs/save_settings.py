@@ -78,6 +78,7 @@ def input_files(project_name: str):
         os.makedirs(files_path)
     files = os.listdir(files_path)
     st.markdown(f"Items: `{len(files)}`")
+    files.sort()
     st.write(files)
 
 

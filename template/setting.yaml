@@ -61,7 +61,7 @@ chunks:
 
 cache:
   type: file # or blob
-  base_dir: "cache"
+  base_dir: "/app/cache"
 
 reporting:
   type: file # or console, blob

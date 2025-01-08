@@ -34,6 +34,10 @@ def overwrite_settings_yaml(root, new_project_name):
         with open(settings_yaml, "w") as f:
             new_settings_yaml = t.read().replace(
                 "container_name: default", f"container_name: {container_name}"
+            ).replace(
+                'base_dir: "logs"', f'base_dir: "{root}/logs"'
+            ).replace(
+                'base_dir: "output"', f'base_dir: "{root}/output"'
             )
             f.write(new_settings_yaml)
 
