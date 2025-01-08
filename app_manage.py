@@ -25,7 +25,6 @@ sys.path.append(grandparent_dir)
 
 def page():
     restart_component()
-    # set_envs()
     create_project()
     projects_manage()
 

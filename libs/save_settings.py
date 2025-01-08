@@ -125,12 +125,15 @@ def set_settings(project_name: str, read_only=False):
         ]
     )
     with tab0:
-        setting_editor(
-            project_name,
-            ".env",
-            language="sh",
-            read_only=read_only,
-        )
+        if read_only:
+            st.write("This is a hidden tab for test.")
+        else:
+            setting_editor(
+                project_name,
+                ".env",
+                language="sh",
+                read_only=read_only,
+            )
     with tab1:
         setting_editor(
             project_name,
