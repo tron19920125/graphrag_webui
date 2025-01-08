@@ -17,6 +17,7 @@ from libs.config import (
 )
 from theodoretools.url import url_to_name
 import libs.pdf_txt as pdf_txt
+from theodoretools.fs import get_directory_size
 
 
 def create_zip(directory, output_path):
@@ -80,8 +81,9 @@ def generate_data(project_name: str):
 
                 st.success("Data generated successfully.")
 
+    input_cache_size_mb = get_directory_size(f"/app/projects/{project_name}/input")
     if st.button(
-        "Download generated files",
+        f"Download generated files",
         key=f"downloads_input_files_{project_name}",
         icon="💾",
     ):
@@ -95,22 +97,26 @@ def generate_data(project_name: str):
                 file_name=f"{project_name}.zip",
                 mime="application/zip",
             )
+    if input_cache_size_mb > 0:
+        if st.button(
+            f"Clear generated files ({input_cache_size_mb} MB)",
+            key=f"delete_all_input_files_{project_name}",
+            icon="🗑️",
+        ):
+            run_command(f"rm -rf /app/projects/{project_name}/input/*")
+            time.sleep(3)
+            st.success("All files deleted.")
 
-    if st.button(
-        "Clear generated files", key=f"delete_all_input_files_{project_name}", icon="🗑️"
-    ):
-        run_command(f"rm -rf /app/projects/{project_name}/input/*")
-        time.sleep(3)
-        st.success("All files deleted.")
-
-    if st.button(
-        "Clear PDF cached files",
-        key=f"delete_all_cached_files_{project_name}",
-        icon="🗑️",
-    ):
-        run_command(f"rm -rf /app/projects/{project_name}/pdf_cache/*")
-        time.sleep(3)
-        st.success("All files deleted.")
+    pdf_cache_size_mb = get_directory_size(f"/app/projects/{project_name}/pdf_cache")
+    if pdf_cache_size_mb > 0:
+        if st.button(
+            f"Clear PDF cached files ({pdf_cache_size_mb} MB)",
+            key=f"delete_all_cached_files_{project_name}",
+            icon="🗑️",
+        ):
+            run_command(f"rm -rf /app/projects/{project_name}/pdf_cache/*")
+            time.sleep(3)
+            st.success("All files deleted.")
 
 
 def convert_file(file_path, file, project_name, pdf_vision_option):

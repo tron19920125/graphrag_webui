@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 
 def load_project_env(project_name: str):
-    load_dotenv(f"/app/projects/{project_name}/.env")
+    load_dotenv(dotenv_path=f"/app/projects/{project_name}/.env", override=True)
 
 
 def project_path(project_name: str):

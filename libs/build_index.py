@@ -6,6 +6,7 @@ import streamlit as st
 
 from libs.common import run_command, load_graphrag_config
 from libs.print_progress import PrintProgressLogger
+from theodoretools.fs import get_directory_size
 
 
 def build_index(project_name: str):
@@ -27,8 +28,18 @@ def build_index(project_name: str):
             )
 
     st.markdown("----------------------------")
+    cache_size_mb = get_directory_size(f"/app/projects/{project_name}/cache")
+    if cache_size_mb > 0:
+        st.write(f"Cache size: {cache_size_mb} MB")
 
-    if st.button("Clear index files", key="clear_index_" + project_name, icon="🗑️"):
+    output_size_mb = get_directory_size(
+        f"/app/projects/{project_name}/output", [".log"]
+    )
+    if output_size_mb > 0 and st.button(
+        f"Clear index files ({output_size_mb} MB)",
+        key="clear_index_" + project_name,
+        icon="🗑️",
+    ):
         run_command(f"rm -rf /app/projects/{project_name}/output/*")
         st.success("All files deleted.")
         time.sleep(3)
