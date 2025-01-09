@@ -234,9 +234,8 @@ def test_file(
 
                 if "answer" in row:
                     answer = f"{row['answer']}"
-                    if answer == "nan":
-                        answer = ""
-                    st.warning(f"Answer (chars {len(answer)}): {answer}")
+                    if answer != "nan":
+                        st.warning(f"Answer (chars {len(answer)}): {answer}")
 
                 modified_df.at[index, f"GraphRAG_{project_name}"] = response
                 result = get_real_response(response)
