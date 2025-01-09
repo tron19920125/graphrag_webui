@@ -137,14 +137,13 @@ def restart_component():
         f"[GraphRAG WebUI](https://github.com/TheodoreNiu/graphrag_webui):`{config.app_version}` [GraphRAG](https://github.com/microsoft/graphrag):`{config.graphrag_version}` App started at: `{config.app_started_at}`"
     )
 
-    with st.expander("App Server"):
-        if st.button("Restart"):
-            st.success("You need to refresh page later.")
-            os._exit(1)
-            sys.exit(1)
-            os.kill(os.getpid(), signal.SIGTERM)
-            st.stop()
-            sys.exit()
+    if st.button("Restart Server"):
+        st.success("You need to refresh page later.")
+        os._exit(1)
+        sys.exit(1)
+        os.kill(os.getpid(), signal.SIGTERM)
+        st.stop()
+        sys.exit()
 
     st.markdown("-----------------")
 
