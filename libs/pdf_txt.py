@@ -31,14 +31,12 @@ class PageTask:
         self.txt_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png.txt"
         self.ai_txt_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png.{self.pdf_vision_option_format}.txt"
         self.page_num = page_num
-
-        graphrag_config = load_graphrag_config(project_name)
-
+        self.graphrag_config = load_graphrag_config(project_name)
         self.client = AzureOpenAI(
-            api_version=graphrag_config.llm.api_version,
-            azure_endpoint=graphrag_config.llm.api_base,
-            azure_deployment=graphrag_config.llm.deployment_name,
-            api_key=graphrag_config.llm.api_key,
+            api_version=self.graphrag_config.llm.api_version,
+            azure_endpoint=self.graphrag_config.llm.api_base,
+            azure_deployment=self.graphrag_config.llm.deployment_name,
+            api_key=self.graphrag_config.llm.api_key,
         )
 
     def page_to_image(self):
@@ -111,7 +109,7 @@ class PageTask:
                     ],
                 }
             ],
-            model=os.getenv("AZURE_CHAT_MODEL_ID"),
+            model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
 
@@ -141,7 +139,7 @@ class PageTask:
                     ],
                 }
             ],
-            model=os.getenv("AZURE_CHAT_MODEL_ID"),
+            model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
 
@@ -169,7 +167,7 @@ class PageTask:
                     ],
                 }
             ],
-            model=os.getenv("AZURE_CHAT_MODEL_ID"),
+            model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
 
@@ -198,7 +196,7 @@ class PageTask:
                     ],
                 }
             ],
-            model=os.getenv("AZURE_CHAT_MODEL_ID"),
+            model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
 
