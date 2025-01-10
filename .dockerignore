@@ -25,3 +25,8 @@
 **/cache
 LICENSE
 README.md
+.venv
+.git
+cache
+output
+logs

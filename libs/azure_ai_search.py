@@ -19,7 +19,7 @@ from azure.search.documents.indexes.models import (
     VectorSearchAlgorithmMetric,
     VectorSearchProfile,
 )
-from libs.common import debug
+
 
 class AzureAISearch(AzureAISearch):
     """The Azure AI Search vector storage implementation."""
@@ -88,17 +88,17 @@ class AzureAISearch(AzureAISearch):
             if doc.vector is not None
         ]
 
-
         # save the batch by self.db_connection.upload_documents(batch) each 100 items
         batch_size = 200
-        num_batches = len(batch) // batch_size + (1 if len(batch) % batch_size!= 0 else 0)
+        num_batches = len(batch) // batch_size + (
+            1 if len(batch) % batch_size != 0 else 0
+        )
 
         for i in range(num_batches):
             start_index = i * batch_size
             end_index = min((i + 1) * batch_size, len(batch))
             current_batch = batch[start_index:end_index]
             self.db_connection.upload_documents(current_batch)
-            debug(f"Uploaded {len(current_batch)} items")
 
         if len(batch) > 0:
             self.db_connection.upload_documents(batch)

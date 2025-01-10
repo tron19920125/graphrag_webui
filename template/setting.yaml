@@ -9,13 +9,13 @@ encoding_model: cl100k_base # this needs to be matched to your model!
 llm:
   api_key: ${AZURE_API_KEY} # set this in the generated .env file
   type: azure_openai_chat # or azure_openai_chat
-  model: ${AZURE_CHAT_MODEL_ID}
+  model: "gpt-4o"
   model_supports_json: true # recommended if this is available for your model.
   # audience: "https://cognitiveservices.azure.com/.default"
   api_base: ${AZURE_API_BASE}
-  api_version: ${AZURE_API_VERSION}
+  api_version: "2024-08-01-preview"
   # organization: <organization_id>
-  deployment_name: ${AZURE_CHAT_DEPLOYMENT_NAME}
+  deployment_name: "gpt-4o"
 
 parallelization:
   stagger: 0.3
@@ -34,12 +34,12 @@ embeddings:
   llm:
     api_key: ${AZURE_EMBEDDING_API_KEY}
     type: azure_openai_embedding # or openai_embedding
-    model: ${AZURE_EMBEDDING_MODEL_ID}
+    model: "text-embedding-3-small"
     api_base: ${AZURE_EMBEDDING_API_BASE}
-    api_version: ${AZURE_EMBEDDING_API_VERSION}
+    api_version: "2023-05-15"
     # audience: "https://cognitiveservices.azure.com/.default"
     # organization: <organization_id>
-    deployment_name: ${AZURE_EMBEDDING_DEPLOYMENT_NAME}
+    deployment_name: "text-embedding-3-small"
 
 ### Input settings ###
 
@@ -61,7 +61,7 @@ chunks:
 
 cache:
   type: file # or blob
-  base_dir: "cache"
+  base_dir: "/app/cache"
 
 reporting:
   type: file # or console, blob
