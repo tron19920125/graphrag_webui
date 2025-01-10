@@ -41,7 +41,7 @@ bash update.sh
 If you want to make the app as your service, run:
 
 ```bash
-bash service.sh
+sudo ./service.sh
 ```
 
 ## Deploy to production environment
