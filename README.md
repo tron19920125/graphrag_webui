@@ -10,6 +10,14 @@ A web interface for [GraphRAG](https://github.com/microsoft/graphrag).
   - [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 
+## Install Docker & Docker Compose
+
+```bash
+sudo apt update -y
+sudo snap install docker
+sudo apt install docker-compose -y
+```
+
 ## Set Authentication (Optional)
 
 If you want to set authentication, copy and set your config.yaml:
@@ -27,8 +35,11 @@ bash start.sh
 When the applications are started, you will have access to 3 URLs:
 
 - Management App: <http://localhost:9000/>
+  - OR <http://{your-vm-ip}:9000/>
 - Test App: <http://localhost:9001/>
+  - OR <http://{your-vm-ip}:9001/>
 - API Documentation: <http://localhost:9002/docs>
+  - OR <http://{your-vm-ip}:9002/docs>
 
 ## Update GraphRAG WebUI
 
@@ -41,7 +52,7 @@ bash update.sh
 If you want to make the app as your service, run:
 
 ```bash
-sudo ./service.sh
+bash service.sh
 ```
 
 ## Deploy to production environment
