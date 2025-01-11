@@ -23,7 +23,7 @@ def render_excel_file(uploaded_file):
         max_row = sheet.max_row
         max_col = sheet.max_column
 
-        headers = ["是否通过", "不通过原因", "通过但仍需改进"]
+        headers = ["是否通过", "不通过原因", "通过但需改进"]
         
         for i, header_text in enumerate(headers, start=max_col + 1):
             sheet.cell(row=1, column=i, value=header_text)
