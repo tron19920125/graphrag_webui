@@ -24,7 +24,7 @@ def list_uploaded_files(container, project_name: str):
     files = list_files_and_sizes(get_original_dir(project_name))
     if len(files) > 0:
         container = container.container(border=True)
-        container.write(f"Files uploaded `{len(files)}`")
+        container.write(f"`{len(files)}` Files uploaded")
         container.write(files)
 
 

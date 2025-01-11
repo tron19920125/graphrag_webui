@@ -203,19 +203,18 @@ def test_file(
     modified_sheets = {}
 
     for sheet_name in excel_data.sheet_names:
-        st.write(f"### Sheet: {sheet_name}")
-
         sheet_df = excel_data.parse(sheet_name)
         row_count = len(sheet_df)
 
         modified_df = sheet_df.copy()
+        st.write(f"\n\n")
 
         for index, row in sheet_df.iterrows():
             if "query" not in row:
                 raise Exception("query must be in every row")
 
             index_name = f"{index+1}/{row_count}"
-            st.markdown(f"## {index_name}")
+            st.markdown(f"##  {index_name} - {sheet_name}")
             with st.spinner(f"Generating ..."):
 
                 query = row["query"]
