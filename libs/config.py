@@ -5,7 +5,7 @@ from datetime import datetime
 
 load_dotenv()
 
-app_version = "0.1.3"
+app_version = "1.0.0"
 graphrag_version = "1.1.2"
 
 app_started_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
