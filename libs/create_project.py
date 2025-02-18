@@ -72,13 +72,13 @@ def create_project():
             "Copy from", project_name_list, key="create_from_project_name"
         )
     with c3:
+        create_for_username = "admin"
         with open("./config.yaml") as file:
             yaml_config = yaml.load(file, Loader=SafeLoader)
             usernames = yaml_config["credentials"]["usernames"].keys()
-
-        create_for_username = st.selectbox(
-            "Create for", usernames, key="create_for_user_name"
-        )
+            create_for_username = st.selectbox(
+                "Create for", usernames, key="create_for_user_name"
+            )
 
     btn = st.button("Create", key="confirm", icon="🚀")
     if btn:
