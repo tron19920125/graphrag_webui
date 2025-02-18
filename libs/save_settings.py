@@ -46,7 +46,7 @@ def setting_editor(
             settings,
             theme="chaos",
             language=language,
-            height=400,
+            height=500,
             auto_update=True,
             wrap=True,
             show_gutter=True,
