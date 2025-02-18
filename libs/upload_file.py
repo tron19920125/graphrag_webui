@@ -26,12 +26,13 @@ def list_uploaded_files(container, project_name: str):
         container = container.container(border=True)
         container.markdown(f"Files: `{len(files)}`")
         for file in files:
-            container.download_button(
-                label=f"📄 {file[0]} `{file[2]}`",
-                data=file[1],
-                file_name=file[0],
-                key=f"{project_name}-original-{file[0]}",
-            )
+            with open(file[1], "rb") as f:
+                container.download_button(
+                    label=f"📄 {file[0]} `{file[2]}`",
+                    data=f,
+                    file_name=file[0],
+                    key=f"{project_name}-original-{file[0]}",
+                )
 
 
 def upload_file(project_name: str):
