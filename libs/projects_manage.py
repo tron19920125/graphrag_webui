@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from libs.save_settings import set_settings
 
 from libs.index_preview import index_preview
-from libs.common import delete_project_name, get_project_names
+from libs.common import delete_project_name, get_project_names, is_admin
 from theodoretools.fs import get_directory_size
 from libs.prompt_tuning import prompt_tuning
 from libs.upload_file import upload_file
@@ -32,7 +32,7 @@ sys.path.append(grandparent_dir)
 def projects_manage():
 
     st.session_state.project_names = get_project_names()
-    st.markdown("----------------------------")
+
     if st.button("Refresh Projects", key="refresh", icon="🔄"):
         st.session_state.project_names = get_project_names()
 
@@ -43,10 +43,16 @@ def projects_manage():
 
     for project_name in st.session_state.project_names:
         size_mb = get_project_size(project_name)
-        st.markdown(
-            f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}" target="_blank">⚙️ Manage</a>',
-            unsafe_allow_html=True
-        )
+        if is_admin():
+            st.markdown(
+                f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}&action=manage" target="_blank">⚙️ Manage</a> | <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a>',
+                unsafe_allow_html=True
+            )
 
 
 def get_project_size(project_name: str):
@@ -56,12 +62,16 @@ def get_project_size(project_name: str):
     if size_mb == 0:
         size_mb = ""
     else:
-        size_mb = f"({size_mb} MB)"
+        size_mb = f"`({size_mb} MB)`"
 
     return size_mb
 
 
 def project_show(project_name: str):
+    if not is_admin():
+        st.error("You are not an admin.")
+        return
+
     project_path = f"/app/projects/{project_name}"
 
     # Check if project exists
@@ -71,7 +81,7 @@ def project_show(project_name: str):
 
     size_mb = get_project_size(project_name)
 
-    st.write(f"#### 📁 {project_name} {size_mb}")
+    st.write(f"## ⚙️ Manage {project_name} {size_mb}")
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "1 - Upload Files",
         "2 - GraphRAG Settings",

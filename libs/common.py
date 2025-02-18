@@ -14,7 +14,8 @@ from dotenv import load_dotenv
 
 
 def load_project_env(project_name: str):
-    load_dotenv(dotenv_path=f"/app/projects/{project_name}/.env", override=True)
+    load_dotenv(
+        dotenv_path=f"/app/projects/{project_name}/.env", override=True)
 
 
 def project_path(project_name: str):
@@ -27,7 +28,8 @@ def load_graphrag_config(project_name: str):
 
 def set_venvs(project_name: str):
     os.environ["GRAPHRAG_ENTITY_EXTRACTION_PROMPT_FILE"] = str(
-        Path("/app/projects") / project_name / "prompts" / "entity_extraction.txt"
+        Path("/app/projects") / project_name /
+        "prompts" / "entity_extraction.txt"
     )
     os.environ["GRAPHRAG_COMMUNITY_REPORT_PROMPT_FILE"] = (
         f"/app/projects/{project_name}/prompts/community_report.txt"
@@ -130,22 +132,6 @@ def run_command(command: str, output: bool = False):
 
     rc = process.poll()
     return rc
-
-
-def restart_component():
-    st.markdown(
-        f"[GraphRAG WebUI](https://github.com/TheodoreNiu/graphrag_webui):`{config.app_version}` [GraphRAG](https://github.com/microsoft/graphrag):`{config.graphrag_version}` App started at: `{config.app_started_at}`"
-    )
-
-    if st.button("Restart Server"):
-        st.success("You need to refresh page later.")
-        os._exit(1)
-        sys.exit(1)
-        os.kill(os.getpid(), signal.SIGTERM)
-        st.stop()
-        sys.exit()
-
-    st.markdown("-----------------")
 
 
 def generate_text_fingerprint(text, algorithm="sha256"):

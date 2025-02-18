@@ -36,8 +36,6 @@ When the applications are started, you will have access to 3 URLs:
 
 - Management App: <http://localhost:9000/>
   - OR <http://{your-vm-ip}:9000/>
-- Test App: <http://localhost:9001/>
-  - OR <http://{your-vm-ip}:9001/>
 - API Documentation: <http://localhost:9002/docs>
   - OR <http://{your-vm-ip}:9002/docs>
 

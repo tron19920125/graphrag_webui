@@ -3,8 +3,9 @@ import sys
 import streamlit as st
 import os
 from dotenv import load_dotenv
-from libs.save_env import set_envs
-from libs.common import restart_component
+from app_test import test_page
+from libs import config
+from libs.common import is_admin
 from libs.create_project import create_project
 from libs.projects_manage import project_show, projects_manage
 import yaml
@@ -24,18 +25,27 @@ sys.path.append(grandparent_dir)
 
 
 def page():
-    restart_component()
     project_name = st.query_params.get("project_name", None)
+    action = st.query_params.get("action", None)
     if project_name is not None:
-        project_show(project_name)
+        if action == 'test':
+            test_page()
+            return
+        if action == 'manage':
+            project_show(project_name)
+            return
+        st.error("Invalid action")
         return
-    create_project()
+
+    if is_admin():
+        create_project()
+
     projects_manage()
 
 
 if __name__ == "__main__":
 
-    page_title = "GraphRAG Manage"
+    page_title = "GraphRAG WebUI"
     st.set_page_config(
         page_title=page_title,
         page_icon="avatars/favicon.ico",
@@ -60,9 +70,20 @@ if __name__ == "__main__":
             authenticator.login()
 
             if st.session_state["authentication_status"]:
-                st.write(f'Welcome `{st.session_state["name"]}`')
+                st.write(
+                    f'Welcome `{st.session_state["name"]}`, [GraphRAG WebUI](https://github.com/TheodoreNiu/graphrag_webui):`{config.app_version}` [GraphRAG](https://github.com/microsoft/graphrag):`{config.graphrag_version}` App started at: `{config.app_started_at}`')
+
                 authenticator.logout()
-                st.markdown("-----------------")
+                st.markdown("----------------------------")
+
+                if is_admin() and st.button("Restart Server"):
+                    st.success("You need to refresh page later.")
+                    os._exit(1)
+                    sys.exit(1)
+                    os.kill(os.getpid(), signal.SIGTERM)
+                    st.stop()
+                    sys.exit()
+
                 page()
             elif st.session_state["authentication_status"] is False:
                 st.error("Username/password is incorrect")
