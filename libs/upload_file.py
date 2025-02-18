@@ -23,8 +23,10 @@ load_dotenv()
 def list_uploaded_files(container, project_name: str):
     files = list_files_and_sizes(get_original_dir(project_name))
     if len(files) > 0:
+        container = container.container(border=True)
+        container.markdown(f"Files: `{len(files)}`")
         for file in files:
-            st.download_button(
+            container.download_button(
                 label=f"📄 {file[0]} `{file[2]}`",
                 data=file[1],
                 file_name=file[0],
