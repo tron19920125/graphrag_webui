@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 import io
 from libs.find_sources import get_query_sources
@@ -10,31 +9,25 @@ from libs.render_context import (
     render_response,
 )
 from libs.save_settings import set_settings
-from libs.common import get_project_names, project_path, restart_component
+from libs.common import project_path
 import pandas as pd
 from graphrag.cli.query import run_local_search, run_global_search, run_drift_search
-import yaml
-from yaml.loader import SafeLoader
-import streamlit_authenticator as stauth
 from libs.render_excel import render_excel_file
 
 
-def page():
-    restart_component()
+def test_page():
 
-    project_names = get_project_names()
-    if len(project_names) == 0:
-        st.error("No projects found, please go to manage page to create a project.")
+    project_name = st.query_params.get("project_name", None)
+    if project_name is None:
+        st.error("Please select a project to test.")
         return
 
-    st.markdown("### Select Project to Test")
+    st.markdown(f"## 🌍 Test {project_name}")
 
-    c1, c2, c3 = st.columns([1, 1, 1])
+    c1, c2 = st.columns([1, 1])
     with c1:
-        project_name = st.selectbox("Project", project_names)
-    with c2:
         community_level = st.text_input("community_level", value=2)
-    with c3:
+    with c2:
         response_type = st.selectbox(
             "Response Type", ["Single Paragraph", "Multiple Paragraphs"]
         )
@@ -43,13 +36,6 @@ def page():
     st.session_state["community_level"] = community_level
     st.session_state["response_type"] = response_type
 
-    # project settings review
-    st.write(f"You selected: `{project_name}`")
-    with st.expander("🔧 Project Settings Review"):
-        set_settings(project_name, read_only=True)
-
-    st.text("\n")
-    st.text("\n")
     st.text("\n")
     st.markdown("### Single Test")
 
@@ -254,39 +240,3 @@ def test_file(
 
     output = render_excel_file(output)
     return output
-
-
-if __name__ == "__main__":
-    page_title = "GraphRAG Test"
-    st.set_page_config(
-        page_title=page_title,
-        page_icon="avatars/favicon.ico",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-    st.image("avatars/logo.svg", width=100)
-    st.title(page_title)
-
-    if not os.path.exists("./config.yaml"):
-        page()
-    else:
-        with open("./config.yaml") as file:
-            yaml_config = yaml.load(file, Loader=SafeLoader)
-            authenticator = stauth.Authenticate(
-                yaml_config["credentials"],
-                yaml_config["cookie"]["name"],
-                yaml_config["cookie"]["key"],
-                yaml_config["cookie"]["expiry_days"],
-            )
-
-            authenticator.login()
-
-            if st.session_state["authentication_status"]:
-                st.write(f'Welcome `{st.session_state["name"]}`')
-                authenticator.logout()
-                st.markdown("-----------------")
-                page()
-            elif st.session_state["authentication_status"] is False:
-                st.error("Username/password is incorrect")
-            elif st.session_state["authentication_status"] is None:
-                st.warning("Please enter your username and password")
