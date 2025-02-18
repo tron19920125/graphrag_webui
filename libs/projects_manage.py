@@ -30,54 +30,76 @@ sys.path.append(grandparent_dir)
 
 
 def projects_manage():
+
     st.session_state.project_names = get_project_names()
-    
     st.markdown("----------------------------")
     if st.button("Refresh Projects", key="refresh", icon="🔄"):
         st.session_state.project_names = get_project_names()
-        
+
     if len(st.session_state.project_names) == 0:
         return
-    
-    st.markdown(f"# Projects ({len(st.session_state.project_names)})")
-    
+
+    st.markdown(f"## Projects ({len(st.session_state.project_names)})")
+
     for project_name in st.session_state.project_names:
-        size_mb = get_directory_size(f"/app/projects/{project_name}/output", ['.log'])
+        size_mb = get_project_size(project_name)
+        st.markdown(
+            f'{project_name} {size_mb} <a href="/?project_name={project_name}" target="_blank">⚙️ Manage</a>',
+            unsafe_allow_html=True
+        )
 
-        if size_mb == 0:
-            size_mb = ""
-        else:
-            size_mb = f"({size_mb} MB)"
 
-        with st.expander(f"#### 📁 {project_name} {size_mb}"):
-                tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-                    "1 - Upload Files",
-                    "2 - GraphRAG Settings",
-                    "3 - Generate Data",
-                    "4 - Prompt Tuning",
-                    "5 - Build Index",
-                    "6 - Index Preview",
-                    "7 - Manage"
-                    ])
-                with tab1:
-                    upload_file(project_name)
-                with tab2:
-                    set_settings(project_name)
-                with tab3:
-                    generate_data(project_name)
-                with tab4:
-                    prompt_tuning(project_name)
-                with tab5:
-                    build_index(project_name)
-                with tab6:
-                    index_preview(project_name)
-                with tab7:
-                    if st.button("Export to ZIP", key=f"export_zip_{project_name}", icon="📦"):
-                        export_project_to_zip(project_name)
-                        
-                    if st.button("Delete", key=f"delete_{project_name}", icon="🗑️"):
-                        delete_project_name(project_name)
-                        st.session_state.project_names = get_project_names()
+def get_project_size(project_name: str):
+    size_mb = get_directory_size(
+        f"/app/projects/{project_name}/output", ['.log'])
+
+    if size_mb == 0:
+        size_mb = ""
+    else:
+        size_mb = f"({size_mb} MB)"
+
+    return size_mb
+
+
+def project_show(project_name: str):
+    project_path = f"/app/projects/{project_name}"
+
+    # Check if project exists
+    if not os.path.exists(project_path):
+        st.error(f"Project {project_name} does not exist.")
+        return
+
+    size_mb = get_project_size(project_name)
+
+    st.write(f"#### 📁 {project_name} {size_mb}")
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "1 - Upload Files",
+        "2 - GraphRAG Settings",
+        "3 - Generate Data",
+        "4 - Prompt Tuning",
+        "5 - Build Index",
+        "6 - Index Preview",
+        "7 - Manage"
+    ])
+    with tab1:
+        upload_file(project_name)
+    with tab2:
+        set_settings(project_name)
+    with tab3:
+        generate_data(project_name)
+    with tab4:
+        prompt_tuning(project_name)
+    with tab5:
+        build_index(project_name)
+    with tab6:
+        index_preview(project_name)
+    with tab7:
+        if st.button("Export to ZIP", key=f"export_zip_{project_name}", icon="📦"):
+            export_project_to_zip(project_name)
+
+        if st.button("Delete", key=f"delete_{project_name}", icon="🗑️"):
+            delete_project_name(project_name)
+            st.session_state.project_names = get_project_names()
 
 
 def export_project_to_zip(project_name: str):
