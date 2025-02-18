@@ -53,6 +53,7 @@ def overwrite_settings_env(root):
 def create_project():
     project_name_list = get_project_names()
     new_project_value = "Just New Project"
+    st.markdown("----------------------------")
     st.markdown("## New Project")
     today_hour = time.strftime("%Y%m%d%H", time.localtime())
     c1, c2, c3 = st.columns(3)

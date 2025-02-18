@@ -74,7 +74,6 @@ if __name__ == "__main__":
                     f'Welcome `{st.session_state["name"]}`, [GraphRAG WebUI](https://github.com/TheodoreNiu/graphrag_webui):`{config.app_version}` [GraphRAG](https://github.com/microsoft/graphrag):`{config.graphrag_version}` App started at: `{config.app_started_at}`')
 
                 authenticator.logout()
-                st.markdown("----------------------------")
 
                 if is_admin() and st.button("Restart Server"):
                     st.success("You need to refresh page later.")
