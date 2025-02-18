@@ -8,6 +8,9 @@ import libs.config as config
 from contextlib import redirect_stdout
 import asyncio
 from graphrag.cli.initialize import initialize_project_at
+import yaml
+from yaml.loader import SafeLoader
+import streamlit_authenticator as stauth
 
 load_dotenv()
 
@@ -68,10 +71,19 @@ def create_project():
         copy_from_project_name = st.selectbox(
             "Copy from", project_name_list, key="create_from_project_name"
         )
+    with c3:
+        with open("./config.yaml") as file:
+            yaml_config = yaml.load(file, Loader=SafeLoader)
+            usernames = yaml_config["credentials"]["usernames"].keys()
+
+        create_for_username = st.selectbox(
+            "Create for", usernames, key="create_for_user_name"
+        )
 
     btn = st.button("Create", key="confirm", icon="🚀")
     if btn:
-        formatted_project_name = format_project_name(new_project_name)
+        formatted_project_name = format_project_name(
+            f"{create_for_username}_{new_project_name}")
 
         if check_project_exists(formatted_project_name):
             st.error(f"Project {formatted_project_name} already exists.")
