@@ -92,8 +92,11 @@ def input_files(project_name: str):
 
 
 def set_settings(project_name: str, read_only=False):
-    config_link = "https://microsoft.github.io/graphrag/config/yaml/"
-    st.markdown(f"Default Configuration: [{config_link}]({config_link})")
+
+    if not read_only:
+        config_link = "https://microsoft.github.io/graphrag/config/yaml/"
+        st.markdown(f"Default Configuration: [{config_link}]({config_link})")
+
     default_settings = ""
     with open("/app/template/setting.yaml", "r") as t:
         default_settings = t.read()

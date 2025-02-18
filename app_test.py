@@ -25,6 +25,11 @@ def test_page():
     st.markdown("----------------------------")
     st.markdown(f"## 🌍 Test {project_name}")
 
+    with st.expander("📄 Settings"):
+        set_settings(project_name, read_only=True)
+
+    st.text("\n")
+
     c1, c2 = st.columns([1, 1])
     with c1:
         community_level = st.text_input("community_level", value=2)
