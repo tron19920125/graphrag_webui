@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from libs.save_env import set_envs
 from libs.common import restart_component
 from libs.create_project import create_project
-from libs.projects_manage import projects_manage
+from libs.projects_manage import project_show, projects_manage
 import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
@@ -25,6 +25,10 @@ sys.path.append(grandparent_dir)
 
 def page():
     restart_component()
+    project_name = st.query_params.get("project_name", None)
+    if project_name is not None:
+        project_show(project_name)
+        return
     create_project()
     projects_manage()
 
