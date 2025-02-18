@@ -44,7 +44,7 @@ def projects_manage():
     for project_name in st.session_state.project_names:
         size_mb = get_project_size(project_name)
         st.markdown(
-            f'{project_name} {size_mb} <a href="/?project_name={project_name}" target="_blank">⚙️ Manage</a>',
+            f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}" target="_blank">⚙️ Manage</a>',
             unsafe_allow_html=True
         )
 
