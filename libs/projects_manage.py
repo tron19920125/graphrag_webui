@@ -33,6 +33,7 @@ def projects_manage():
 
     st.session_state.project_names = get_project_names()
 
+    st.markdown("----------------------------")
     if st.button("Refresh Projects", key="refresh", icon="🔄"):
         st.session_state.project_names = get_project_names()
 
@@ -81,6 +82,7 @@ def project_show(project_name: str):
 
     size_mb = get_project_size(project_name)
 
+    st.markdown("----------------------------")
     st.write(f"## ⚙️ Manage {project_name} {size_mb}")
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "1 - Upload Files",

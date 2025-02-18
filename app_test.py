@@ -22,6 +22,7 @@ def test_page():
         st.error("Please select a project to test.")
         return
 
+    st.markdown("----------------------------")
     st.markdown(f"## 🌍 Test {project_name}")
 
     c1, c2 = st.columns([1, 1])
