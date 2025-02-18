@@ -73,15 +73,18 @@ if __name__ == "__main__":
                 st.write(
                     f'Welcome `{st.session_state["name"]}`, [GraphRAG WebUI](https://github.com/TheodoreNiu/graphrag_webui):`{config.app_version}` [GraphRAG](https://github.com/microsoft/graphrag):`{config.graphrag_version}` App started at: `{config.app_started_at}`')
 
-                authenticator.logout()
+                col1, col2 = st.columns([1, 16])
+                with col1:
+                    authenticator.logout()
 
-                if is_admin() and st.button("Restart Server"):
-                    st.success("You need to refresh page later.")
-                    os._exit(1)
-                    sys.exit(1)
-                    os.kill(os.getpid(), signal.SIGTERM)
-                    st.stop()
-                    sys.exit()
+                with col2:
+                    if is_admin() and st.button("Restart Server"):
+                        st.success("You need to refresh page later.")
+                        os._exit(1)
+                        sys.exit(1)
+                        os.kill(os.getpid(), signal.SIGTERM)
+                        st.stop()
+                        sys.exit()
 
                 page()
             elif st.session_state["authentication_status"] is False:
