@@ -57,7 +57,7 @@ def list_files_and_sizes(directory: str):
             file_path = os.path.join(root, file)
             file_size_bytes = os.path.getsize(file_path)
             file_size_mb = file_size_bytes / (1024 * 1024)
-            file_list.append(f"{file} ({file_size_mb:.4f}MB)")
+            file_list.append((file, file_path, f"({file_size_mb:.4f}MB)"))
     return file_list
 
 

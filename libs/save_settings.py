@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 from streamlit_ace import st_ace
+from libs.common import list_files_and_sizes
 import libs.config as config
 
 from graphrag.prompts.index.claim_extraction import CLAIM_EXTRACTION_PROMPT
@@ -76,10 +77,17 @@ def input_files(project_name: str):
     files_path = f"/app/projects/{project_name}/input"
     if not os.path.exists(files_path):
         os.makedirs(files_path)
-    files = os.listdir(files_path)
-    st.markdown(f"Items: `{len(files)}`")
-    files.sort()
-    st.write(files)
+
+    files = list_files_and_sizes(files_path)
+    st.markdown(f"Files: `{len(files)}`")
+    if len(files) > 0:
+        for file in files:
+            st.download_button(
+                label=f"📄 {file[0]} `{file[2]}`",
+                data=file[1],
+                file_name=file[0],
+                key=f"{project_name}-input-{file[0]}",
+            )
 
 
 def set_settings(project_name: str, read_only=False):
@@ -91,7 +99,6 @@ def set_settings(project_name: str, read_only=False):
     (
         tab0,
         tab1,
-        tab2,
         tab3,
         tab4,
         tab5,
@@ -109,7 +116,6 @@ def set_settings(project_name: str, read_only=False):
         [
             "📄 .env",
             "📄 settings.yaml",
-            "📁 Input",
             "📄 claim_extraction",
             "📄 community_report",
             "📄 entity_extraction",
@@ -143,8 +149,6 @@ def set_settings(project_name: str, read_only=False):
             language="yaml",
             read_only=read_only,
         )
-    with tab2:
-        input_files(project_name)
     with tab3:
         setting_editor(
             project_name,

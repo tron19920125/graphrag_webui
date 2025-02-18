@@ -23,9 +23,13 @@ load_dotenv()
 def list_uploaded_files(container, project_name: str):
     files = list_files_and_sizes(get_original_dir(project_name))
     if len(files) > 0:
-        container = container.container(border=True)
-        container.write(f"`{len(files)}` Files uploaded")
-        container.write(files)
+        for file in files:
+            st.download_button(
+                label=f"📄 {file[0]} `{file[2]}`",
+                data=file[1],
+                file_name=file[0],
+                key=f"{project_name}-original-{file[0]}",
+            )
 
 
 def upload_file(project_name: str):
@@ -62,7 +66,8 @@ def upload_file(project_name: str):
         Path(f"/app/projects/{project_name}/original").mkdir(
             parents=True, exist_ok=True
         )
-        Path(f"/app/projects/{project_name}/input").mkdir(parents=True, exist_ok=True)
+        Path(
+            f"/app/projects/{project_name}/input").mkdir(parents=True, exist_ok=True)
 
         for uploaded_file in uploaded_files:
             with open(
@@ -136,14 +141,16 @@ def extract_images_from_md(md_content, extract_dir):
             with open(image_path, "wb") as image_file:
                 image_file.write(image_data)
                 rek_image(image_path)
-                updated_md_content = updated_md_content.replace(match, image_path)
+                updated_md_content = updated_md_content.replace(
+                    match, image_path)
         elif match.startswith("http") or match.startswith("https"):
             image_path = download_image(
                 match, extract_dir, all_matches.index(match) + 1
             )
             if image_path:
                 rek_image(image_path)
-                updated_md_content = updated_md_content.replace(match, image_path)
+                updated_md_content = updated_md_content.replace(
+                    match, image_path)
         else:
             image_path = match
             if not match.startswith(extract_dir):
