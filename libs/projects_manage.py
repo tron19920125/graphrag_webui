@@ -106,6 +106,11 @@ def project_show(project_name: str):
     with tab6:
         index_preview(project_name)
     with tab7:
+        st.link_button(
+            "🌍 Test",
+            f"/?project_name={project_name}&action=test"
+        )
+
         if st.button("Export to ZIP", key=f"export_zip_{project_name}", icon="📦"):
             export_project_to_zip(project_name)
 
