@@ -4,7 +4,7 @@ set -e
 
 CUR_PATH=$(pwd)
 
-sudo cat > /etc/systemd/system/graphrag_webui.service <<EOF
+sudo cat >graphrag_webui.service <<EOF
 [Unit]
 Description=Graphrag WebUI
 After=network.target
@@ -23,6 +23,7 @@ StartLimitAction=reboot
 WantedBy=default.target
 EOF
 
+sudo cp -r graphrag_webui.service /etc/systemd/system/graphrag_webui.service
 sudo chown root:root /etc/systemd/system/graphrag_webui.service
 sudo systemctl stop graphrag_webui.service
 sudo systemctl enable graphrag_webui.service
