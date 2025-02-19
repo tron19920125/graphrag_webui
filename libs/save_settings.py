@@ -98,7 +98,7 @@ def set_settings(project_name: str, read_only=False):
         st.markdown(f"Default Configuration: [{config_link}]({config_link})")
 
     default_settings = ""
-    with open("/app/template/setting.yaml", "r") as t:
+    with open("/app/template/setting_lancedb.yaml", "r") as t:
         default_settings = t.read()
     (
         tab0,

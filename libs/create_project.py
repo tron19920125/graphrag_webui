@@ -29,9 +29,11 @@ def initialize_project(path):
         loop.close()
 
 
-def overwrite_settings_yaml(root, new_project_name):
+def overwrite_settings_yaml(root, new_project_name, create_db_type):
     settings_yaml = f"{root}/settings.yaml"
-    template_settings_yaml = f"/app/template/setting.yaml"
+
+    template_settings_yaml = f"/app/template/setting_{create_db_type}.yaml"
+
     container_name = f"{config.app_name}_{new_project_name}"
     with open(template_settings_yaml, "r") as t:
         with open(settings_yaml, "w") as f:
@@ -59,7 +61,7 @@ def create_project():
     st.markdown("----------------------------")
     st.markdown("## New Project")
     today_hour = time.strftime("%Y%m%d%H", time.localtime())
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
         new_project_name = st.text_input(
             "Please input name",
@@ -79,6 +81,10 @@ def create_project():
             create_for_username = st.selectbox(
                 "Create for", usernames, key="create_for_user_name"
             )
+    with c4:
+        create_db_type = st.selectbox(
+            "Vector DB", ['ai_search', 'lancedb'], key="create_db_type"
+        )
 
     btn = st.button("Create", key="confirm", icon="🚀")
     if btn:
@@ -94,7 +100,8 @@ def create_project():
         try:
             if copy_from_project_name == new_project_value:
                 initialize_project(path=root)
-                overwrite_settings_yaml(root, formatted_project_name)
+                overwrite_settings_yaml(
+                    root, formatted_project_name, create_db_type)
                 overwrite_settings_env(root)
             else:
                 copy_project(copy_from_project_name, formatted_project_name)
