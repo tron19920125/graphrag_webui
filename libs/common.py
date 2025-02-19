@@ -51,18 +51,14 @@ def is_built(project_name: str):
         return False
 
     elements_set = [
-        "create_final_nodes.parquet",
-        "create_final_text_units.parquet",
+        "create_final_communities.parquet",
         "create_final_entities.parquet",
+        "create_final_text_units.parquet",
         "create_final_community_reports.parquet",
-        "input.parquet",
-        "base_relationship_edges.parquet",
-        "create_final_relationships.parquet",
+        "create_final_nodes.parquet",
         "stats.json",
         "create_final_documents.parquet",
-        "create_final_communities.parquet",
-        "create_base_text_units.parquet",
-        "base_entity_nodes.parquet"
+        "create_final_relationships.parquet"
     ]
 
     return set(elements_set).issubset(set(files))
