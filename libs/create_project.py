@@ -83,7 +83,7 @@ def create_project():
             )
     with c4:
         create_db_type = st.selectbox(
-            "Vector DB", ['ai_search', 'lancedb'], key="create_db_type"
+            "Vector DB", ['lancedb', 'ai_search'], key="create_db_type"
         )
 
     btn = st.button("Create", key="confirm", icon="🚀")

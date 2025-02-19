@@ -39,6 +39,35 @@ def set_venvs(project_name: str):
     )
 
 
+def is_built(project_name: str):
+    project_base = f"/app/projects/{project_name}/output"
+
+    if not os.path.exists(project_base):
+        return False
+
+    files = os.listdir(project_base)
+
+    if len(files) == 0:
+        return False
+
+    elements_set = [
+        "create_final_nodes.parquet",
+        "create_final_text_units.parquet",
+        "create_final_entities.parquet",
+        "create_final_community_reports.parquet",
+        "input.parquet",
+        "base_relationship_edges.parquet",
+        "create_final_relationships.parquet",
+        "stats.json",
+        "create_final_documents.parquet",
+        "create_final_communities.parquet",
+        "create_base_text_units.parquet",
+        "base_entity_nodes.parquet"
+    ]
+
+    return set(elements_set).issubset(set(files))
+
+
 def check_rag_complete(project_name: str):
     base_path = f"/app/projects/{project_name}"
     subdirectories = list_subdirectories(path=f"{base_path}/output")
@@ -74,6 +103,53 @@ def is_admin():
     return True
 
 
+def is_project_admin(project_name: str):
+    if not os.path.exists("./config.yaml"):
+        return True
+
+    if is_admin():
+        return True
+
+    if (
+        "authentication_status" in st.session_state
+        and st.session_state["authentication_status"]
+    ):
+        usernmae = st.session_state["username"].lower()
+        return usernmae.endswith("_admin") and project_name.startswith(usernmae.replace("_admin", ""))
+
+    return True
+
+
+def can_test_project(project_name: str):
+    if not os.path.exists("./config.yaml"):
+        return True
+
+    if is_project_admin(project_name):
+        return True
+
+    if (
+        "authentication_status" in st.session_state
+        and st.session_state["authentication_status"]
+    ):
+        return project_name.startswith(get_project_prefix_by_username())
+
+    return True
+
+
+def get_project_prefix_by_username():
+    if not os.path.exists("./config.yaml"):
+        return ""
+
+    if (
+        "authentication_status" in st.session_state
+        and st.session_state["authentication_status"]
+    ):
+        usernmae = st.session_state["username"].lower()
+        return usernmae.replace("_admin", "")
+
+    return True
+
+
 def get_username():
     if st.session_state["authentication_status"]:
         return st.session_state["username"]
@@ -103,10 +179,15 @@ def project_name_exists(project_name: str):
 def get_project_names():
     project_name_path = "/app/projects"
     projects = list_subdirectories(project_name_path)
+
     if is_admin():
         return projects
 
-    return [v for v in projects if v.startswith(get_username())]
+    list = []
+    for p in projects:
+        if can_test_project(p):
+            list.append(p)
+    return list
 
 
 def run_command(command: str, output: bool = False):

@@ -9,7 +9,7 @@ from libs.render_context import (
     render_response,
 )
 from libs.save_settings import set_settings
-from libs.common import project_path
+from libs.common import is_built, project_path
 import pandas as pd
 from graphrag.cli.query import run_local_search, run_global_search, run_drift_search
 from libs.render_excel import render_excel_file
@@ -24,6 +24,10 @@ def test_page():
 
     st.markdown("----------------------------")
     st.markdown(f"## 🌍 Test {project_name}")
+
+    if not is_built(project_name):
+        st.error("Project not built.")
+        return
 
     with st.expander("📄 Settings"):
         set_settings(project_name, read_only=True)
