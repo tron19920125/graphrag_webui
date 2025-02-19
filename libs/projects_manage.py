@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from libs.save_settings import set_settings
 
 from libs.index_preview import index_preview
-from libs.common import delete_project_name, get_project_names, is_admin
+from libs.common import can_test_project, delete_project_name, get_project_names, is_admin, is_built, is_project_admin
 from theodoretools.fs import get_directory_size
 from libs.prompt_tuning import prompt_tuning
 from libs.upload_file import upload_file
@@ -44,14 +44,19 @@ def projects_manage():
 
     for project_name in st.session_state.project_names:
         size_mb = get_project_size(project_name)
-        if is_admin():
+
+        built_str = ""
+        if is_built(project_name):
+            built_str = f'| <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a>'
+
+        if is_project_admin(project_name):
             st.markdown(
-                f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}&action=manage" target="_blank">⚙️ Manage</a> | <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a>',
+                f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}&action=manage" target="_blank">⚙️ Manage</a> {built_str}',
                 unsafe_allow_html=True
             )
         else:
             st.markdown(
-                f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a>',
+                f'📁 {project_name} {size_mb} {built_str}',
                 unsafe_allow_html=True
             )
 
@@ -69,7 +74,7 @@ def get_project_size(project_name: str):
 
 
 def project_show(project_name: str):
-    if not is_admin():
+    if not is_project_admin(project_name):
         st.error("You are not an admin.")
         return
 

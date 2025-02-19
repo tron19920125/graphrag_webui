@@ -22,7 +22,7 @@ def build_index(project_name: str):
                     config=config,
                     run_id="",
                     is_resume_run=False,
-                    memory_profile=False,
+                    memory_profile=True,
                     progress_logger=PrintProgressLogger(""),
                 )
             )
