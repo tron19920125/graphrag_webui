@@ -32,6 +32,8 @@ def initialize_project(path):
 def overwrite_settings_yaml(root, new_project_name, create_db_type):
     settings_yaml = f"{root}/settings.yaml"
 
+    run_command(f"cp {root}/settings.yaml {root}/settings_default.yaml")
+
     template_settings_yaml = f"/app/template/setting_{create_db_type}.yaml"
 
     container_name = f"{config.app_name}_{new_project_name}"
@@ -43,6 +45,8 @@ def overwrite_settings_yaml(root, new_project_name, create_db_type):
                 'base_dir: "logs"', f'base_dir: "{root}/logs"'
             ).replace(
                 'base_dir: "output"', f'base_dir: "{root}/output"'
+            ).replace(
+                "db_uri: 'lancedb'", f"db_uri: '{root}/lancedb'"
             )
             f.write(new_settings_yaml)
 

@@ -77,14 +77,14 @@ if __name__ == "__main__":
                 with col1:
                     authenticator.logout()
 
-                with col2:
-                    if is_admin() and st.button("Restart Server"):
-                        st.success("You need to refresh page later.")
-                        os._exit(1)
-                        sys.exit(1)
-                        os.kill(os.getpid(), signal.SIGTERM)
-                        st.stop()
-                        sys.exit()
+                # with col2:
+                #     if is_admin() and st.button("Restart Server"):
+                #         st.success("You need to refresh page later.")
+                #         os._exit(1)
+                #         sys.exit(1)
+                #         os.kill(os.getpid(), signal.SIGTERM)
+                #         st.stop()
+                #         sys.exit()
 
                 page()
             elif st.session_state["authentication_status"] is False:

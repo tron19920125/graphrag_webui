@@ -1,3 +1,4 @@
+from pathlib import Path
 import streamlit as st
 import io
 from libs.find_sources import get_query_sources
@@ -13,6 +14,7 @@ from libs.common import is_built, project_path
 import pandas as pd
 from graphrag.cli.query import run_local_search, run_global_search, run_drift_search
 from libs.render_excel import render_excel_file
+from dotenv import load_dotenv
 
 
 def test_page():
@@ -58,6 +60,11 @@ def test_page():
         value="",
     )
 
+    load_dotenv(
+        dotenv_path=Path("/app/projects") / project_name / ".env",
+        override=True,
+    )
+
     tab1, tab2, tab3 = st.tabs(
         ["🛢️ Local Search", "🌍 Global Search", "🌀 Drift Search"]
     )
@@ -77,7 +84,8 @@ def test_page():
                         community_level=int(community_level),
                         response_type=response_type,
                         streaming=False,
-                        config_filepath=None,
+                        config_filepath=Path(
+                            "/app/projects") / project_name / "settings.yaml",
                         data_dir=None,
                     )
                     render_response(response)
