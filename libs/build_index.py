@@ -1,31 +1,26 @@
-import asyncio
 import time
-
-import graphrag.api as api
+from dotenv import load_dotenv
 import streamlit as st
-
-from libs.common import run_command, load_graphrag_config
-from libs.print_progress import PrintProgressLogger
+from pathlib import Path
+from libs.common import is_admin, run_command
 from theodoretools.fs import get_directory_size
+from theodoretools.st import run_shell_command
 
 
 def build_index(project_name: str):
 
     if st.button("Start Build", key="build_index_" + project_name, icon="🚀"):
-        config = load_graphrag_config(project_name)
-        st.info("Config:")
-        st.json(config, expanded=False)
+
+        load_dotenv(
+            dotenv_path=Path("/app/projects") / project_name / ".env",
+            override=True,
+        )
 
         with st.spinner("Building index..."):
-            asyncio.run(
-                api.build_index(
-                    config=config,
-                    run_id="",
-                    is_resume_run=False,
-                    memory_profile=True,
-                    progress_logger=PrintProgressLogger(""),
-                )
-            )
+
+            target_dir = f"/app/projects/{project_name}"
+
+            run_shell_command(['graphrag', 'index'], target_dir)
 
     cache_size_mb = get_directory_size(f"/app/projects/{project_name}/cache")
     if cache_size_mb > 0:

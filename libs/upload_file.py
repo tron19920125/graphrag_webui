@@ -8,7 +8,7 @@ import re
 import base64
 from dotenv import load_dotenv
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-
+import uuid
 from libs.common import get_original_dir, list_files_and_sizes, run_command
 from pathlib import Path
 
@@ -31,7 +31,7 @@ def list_uploaded_files(container, project_name: str):
                     label=f"📄 {file[0]} `{file[2]}`",
                     data=f,
                     file_name=file[0],
-                    key=f"{project_name}-original-{file[0]}",
+                    key=uuid.uuid4()
                 )
 
 
