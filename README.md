@@ -61,12 +61,6 @@ Before deploying the applications, run:
 az login
 ```
 
-### Deploy Test App
-
-```bash
-bash deploy_test.sh
-```
-
 ### Deploy API
 
 ```bash

@@ -15,3 +15,6 @@ config.yaml
 logs/*
 output/*
 lancedb/*
+*.egg-info/
+build/
+dist/
