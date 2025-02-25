@@ -15,8 +15,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'graphrag_webui = graphrag_webui.main:main',
-            'graphrag-webui = graphrag_webui.main:main',
+            'graphrag_webui = cli.main:main',
+            'graphrag-webui = cli.main:main',
         ],
     },
     classifiers=[
