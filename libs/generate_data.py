@@ -73,8 +73,7 @@ def generate_data(project_name: str):
                 for root, dirs, files in os.walk(f"/app/projects/{project_name}/input"):
                     for file in files:
                         file_path = os.path.join(root, file)
-                        convert_file(file_path, file,
-                                     project_name, pdf_vision_option)
+                        convert_file(file_path, file, project_name, pdf_vision_option)
 
                 #  3. make file permissions to another user can write
                 for root, dirs, files in os.walk(f"/app/projects/{project_name}/input"):
@@ -84,35 +83,7 @@ def generate_data(project_name: str):
 
                 st.success("Data generated successfully.")
 
-    input_cache_size_mb = get_directory_size(
-        f"/app/projects/{project_name}/input")
-    if st.button(
-        f"Download generated files",
-        key=f"downloads_input_files_{project_name}",
-        icon="💾",
-    ):
-        directory_to_zip = f"/app/projects/{project_name}/input"
-        output_zip_path = f"/tmp/{project_name}.zip"
-        create_zip(directory_to_zip, output_zip_path)
-        with open(output_zip_path, "rb") as f:
-            st.download_button(
-                label="Download",
-                data=f,
-                file_name=f"{project_name}.zip",
-                mime="application/zip",
-            )
-    if input_cache_size_mb > 0:
-        if st.button(
-            f"Clear generated files ({input_cache_size_mb} MB)",
-            key=f"delete_all_input_files_{project_name}",
-            icon="🗑️",
-        ):
-            run_command(f"rm -rf /app/projects/{project_name}/input/*")
-            time.sleep(3)
-            st.success("All files deleted.")
-
-    pdf_cache_size_mb = get_directory_size(
-        f"/app/projects/{project_name}/pdf_cache")
+    pdf_cache_size_mb = get_directory_size(f"/app/projects/{project_name}/pdf_cache")
     if pdf_cache_size_mb > 0:
         if st.button(
             f"Clear PDF cached files ({pdf_cache_size_mb} MB)",
@@ -124,7 +95,35 @@ def generate_data(project_name: str):
             st.success("All files deleted.")
 
     st.markdown(f"--------------")
-    input_files(project_name)
+    input_cache_size_mb = get_directory_size(f"/app/projects/{project_name}/input")
+    if input_cache_size_mb > 0:
+        st.markdown(f"### Input files")
+
+        if st.button(
+            f"Download input files ({input_cache_size_mb} MB)",
+            key=f"downloads_input_files_{project_name}",
+            icon="💾",
+        ):
+            directory_to_zip = f"/app/projects/{project_name}/input"
+            output_zip_path = f"/tmp/{project_name}.zip"
+            create_zip(directory_to_zip, output_zip_path)
+            with open(output_zip_path, "rb") as f:
+                st.download_button(
+                    label="Download",
+                    data=f,
+                    file_name=f"{project_name}.zip",
+                    mime="application/zip",
+                )
+
+        if st.button(
+            f"Clear input files ({input_cache_size_mb} MB)",
+            key=f"delete_all_input_files_{project_name}",
+            icon="🗑️",
+        ):
+            run_command(f"rm -rf /app/projects/{project_name}/input/*")
+            time.sleep(3)
+            st.success("All files deleted.")
+        input_files(project_name)
 
 
 def convert_file(file_path, file, project_name, pdf_vision_option):
@@ -135,8 +134,7 @@ def convert_file(file_path, file, project_name, pdf_vision_option):
 
     if file.endswith(".pdf"):
         st.write(f"converting `{file}`")
-        pdf_txt.save_pdf_pages_as_images(
-            file_path, project_name, pdf_vision_option)
+        pdf_txt.save_pdf_pages_as_images(file_path, project_name, pdf_vision_option)
 
 
 def excel_to_txt(file_path, project_name):
@@ -162,8 +160,7 @@ def prepare_file(file_path, file, project_name):
         if has_download_files(file_path):
             download_files_from_xlsx_csv(file_path, file, project_name)
         else:
-            run_command(
-                f"cp -r '{file_path}' /app/projects/{project_name}/input/")
+            run_command(f"cp -r '{file_path}' /app/projects/{project_name}/input/")
             st.write(f"copied {file} to input")
     if file.endswith(".txt"):
         run_command(f"cp -r '{file_path}' /app/projects/{project_name}/input/")
