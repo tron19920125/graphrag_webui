@@ -5,12 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-ARG APP_URL="http://127.0.0.1"
-ENV APP_URL=$APP_URL
-
 ARG APP_VERSION="local"
 ENV APP_VERSION=$APP_VERSION
 
 EXPOSE 80
 
-CMD ["streamlit", "run", "app_manage.py", "--server.port", "80", "--server.address", "0.0.0.0"]

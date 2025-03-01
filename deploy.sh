@@ -72,11 +72,10 @@ IMAGE=$ACR_NAME.azurecr.io/$APP_NAME:$VERSION
 IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 echo "image: $IMAGE"
 
-docker build --build-arg APP_URL=https://$APP_NAME.azurewebsites.net/ \
-             --build-arg APP_VERSION=$VERSION \
-             --build-arg UPDATE_TIME="$UPDATE_TIME" \
-             -f $DOCKER_FILE \
-             -t $IMAGE .
+docker build --build-arg APP_VERSION=$VERSION \
+  --build-arg UPDATE_TIME="$UPDATE_TIME" \
+  -f $DOCKER_FILE \
+  -t $IMAGE .
 az acr login --name $ACR_NAME
 
 docker images | grep $APP_NAME | grep $VERSION

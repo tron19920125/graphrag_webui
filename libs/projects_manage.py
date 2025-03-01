@@ -8,7 +8,14 @@ from dotenv import load_dotenv
 from libs.save_settings import set_settings
 
 from libs.index_preview import index_preview
-from libs.common import can_test_project, delete_project_name, get_project_names, is_admin, is_built, is_project_admin
+from libs.common import (
+    can_test_project,
+    delete_project_name,
+    get_project_names,
+    is_admin,
+    is_built,
+    is_project_admin,
+)
 from theodoretools.fs import get_directory_size
 from libs.prompt_tuning import prompt_tuning
 from libs.upload_file import upload_file
@@ -47,23 +54,21 @@ def projects_manage():
 
         built_str = ""
         if is_built(project_name):
-            built_str = f'| <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a>'
+            built_str = f'| <a href="/?project_name={project_name}&action=test" target="_blank">🌍 Test</a> | <a href="/docs" target="_blank">🔱 API</a>'
 
         if is_project_admin(project_name):
             st.markdown(
                 f'📁 {project_name} {size_mb} <a href="/?project_name={project_name}&action=manage" target="_blank">⚙️ Manage</a> {built_str}',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f'📁 {project_name} {size_mb} {built_str}',
-                unsafe_allow_html=True
+                f"📁 {project_name} {size_mb} {built_str}", unsafe_allow_html=True
             )
 
 
 def get_project_size(project_name: str):
-    size_mb = get_directory_size(
-        f"/app/projects/{project_name}/output", ['.log'])
+    size_mb = get_directory_size(f"/app/projects/{project_name}/output", [".log"])
 
     if size_mb == 0:
         size_mb = ""
@@ -89,15 +94,17 @@ def project_show(project_name: str):
 
     st.markdown("----------------------------")
     st.write(f"## ⚙️ Manage {project_name} {size_mb}")
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "1 - Upload Files",
-        "2 - GraphRAG Settings",
-        "3 - Generate Data",
-        "4 - Prompt Tuning",
-        "5 - Build Index",
-        "6 - Index Preview",
-        "7 - Manage"
-    ])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+        [
+            "1 - Upload Files",
+            "2 - GraphRAG Settings",
+            "3 - Generate Data",
+            "4 - Prompt Tuning",
+            "5 - Build Index",
+            "6 - Index Preview",
+            "7 - Manage",
+        ]
+    )
     with tab1:
         upload_file(project_name)
     with tab2:
@@ -111,11 +118,8 @@ def project_show(project_name: str):
     with tab6:
         index_preview(project_name)
     with tab7:
-        st.link_button(
-            "🌍 Test",
-            f"/?project_name={project_name}&action=test"
-        )
-
+        st.link_button("🌍 Test", f"/?project_name={project_name}&action=test")
+        st.link_button("🔱 API", "/docs")
         if st.button("Export to ZIP", key=f"export_zip_{project_name}", icon="📦"):
             export_project_to_zip(project_name)
 
@@ -126,14 +130,15 @@ def project_show(project_name: str):
 
 def export_project_to_zip(project_name: str):
     project_path = f"/app/projects/{project_name}"
-    with st.spinner('Exporting ...'):
+    with st.spinner("Exporting ..."):
         zip_file = f"/tmp/{project_name}.zip"
         if os.path.exists(zip_file):
             os.remove(zip_file)
-        shutil.make_archive(f"/tmp/{project_name}", 'zip', project_path)
+        shutil.make_archive(f"/tmp/{project_name}", "zip", project_path)
         with open(zip_file, "rb") as file:
             st.download_button(
                 label=f"Download {project_name}.zip",
                 data=file,
                 icon="💾",
-                file_name=f"{project_name}.zip")
+                file_name=f"{project_name}.zip",
+            )

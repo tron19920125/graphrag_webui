@@ -1,8 +1,7 @@
 import os
-from fastapi.responses import FileResponse
 from libs.find_sources import get_query_sources
 from libs.common import project_path, load_project_env
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, Header
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import libs.config as config
