@@ -40,7 +40,7 @@ cp config.yaml.example config.yaml
 bash start.sh
 ```
 
-When the applications are started, you will have access to 3 URLs:
+When the applications are started, you will have access to 2 URLs:
 
 - Management App: <http://localhost:9000/>
   - OR <http://{your-vm-ip}:9000/>
