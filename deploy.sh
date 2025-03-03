@@ -58,23 +58,31 @@ if [ -z "$LOCATION" ]; then
 fi
 echo "location: $LOCATION"
 
-echo "Creating Resource Group..."
+echo "Creating Resource Group $RESOURCE_GROUP ..."
 az group create \
   --name $RESOURCE_GROUP \
   --location $LOCATION
 
-echo "Creating Container Registry..."
-az acr create \
-  --name $ACR_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --location $LOCATION \
-  --sku Basic
+# if acr not exists, create acr
+echo "Checking if Container Registry $ACR_NAME exists..."
+if ! az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP; then
+  echo "Creating Container Registry $ACR_NAME ..."
+  az acr create \
+    --name $ACR_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --location $LOCATION \
+    --sku Basic
+fi
 
-echo "Creating Container App Environment..."
-az containerapp env create \
-  --name $ENV_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --location $LOCATION
+# if env not exists, create env
+echo "Checking if Container App Environment $ENV_NAME exists..."
+if ! az containerapp env show --name $ENV_NAME --resource-group $RESOURCE_GROUP; then
+  echo "Creating Container App Environment $ENV_NAME ..."
+  az containerapp env create \
+    --name $ENV_NAME \
+    --resource-group $RESOURCE_GROUP \
+    --location $LOCATION
+fi
 
 VERSION=$(date +"%Y%m%d%H%M")
 UPDATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
@@ -82,6 +90,7 @@ IMAGE=$ACR_NAME.azurecr.io/$APP_NAME:$VERSION
 IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 echo "image: $IMAGE"
 
+echo "Login to Container Registry $ACR_NAME..."
 az acr login --name $ACR_NAME
 
 docker build --build-arg APP_VERSION=$VERSION \
@@ -100,13 +109,13 @@ az acr update -n $ACR_NAME --admin-enabled true
 
 # get registry credentials
 ACR_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+REGISTRY_USERNAME=$(az acr credential show --name $ACR_NAME --query "username" -o tsv)
+REGISTRY_PASSWORD=$(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
+
 if [ -z "$ACR_SERVER" ]; then
   echo "ACR_SERVER is empty"
   exit 1
 fi
-
-REGISTRY_USERNAME=$(az acr credential show --name $ACR_NAME --query "username" -o tsv)
-REGISTRY_PASSWORD=$(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
 
 if [ -z "$REGISTRY_USERNAME" ]; then
   echo "REGISTRY_USERNAME is not set"
@@ -118,7 +127,11 @@ if [ -z "$REGISTRY_PASSWORD" ]; then
   exit 1
 fi
 
-echo "Creating Container App..."
+echo "ACR_SERVER: $ACR_SERVER"
+echo "REGISTRY_USERNAME: $REGISTRY_USERNAME"
+echo "REGISTRY_PASSWORD: $REGISTRY_PASSWORD"
+
+echo "Creating Container App $APP_NAME ..."
 RES=$(az containerapp create \
   --name $APP_NAME \
   --resource-group $RESOURCE_GROUP \
