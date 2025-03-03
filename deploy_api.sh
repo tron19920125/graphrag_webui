@@ -9,7 +9,7 @@ fi
 APP_NAME=$1
 
 if [ -z "$APP_NAME" ]; then
-  echo "APP_NAME is not set"
+  echo "Please provide a App name by running: ./deploy_api.sh <app_name>"
   exit 1
 fi
 
