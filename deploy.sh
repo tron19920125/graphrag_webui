@@ -93,9 +93,17 @@ docker images | grep $APP_NAME | grep $VERSION
 
 docker push $IMAGE
 
-ACR_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
-
 docker images | grep $APP_NAME | grep $VERSION
+
+# enable admin user
+az acr update -n $ACR_NAME --admin-enabled true
+
+# get registry credentials
+ACR_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+if [ -z "$ACR_SERVER" ]; then
+  echo "ACR_SERVER is empty"
+  exit 1
+fi
 
 REGISTRY_USERNAME=$(az acr credential show --name $ACR_NAME --query "username" -o tsv)
 REGISTRY_PASSWORD=$(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
