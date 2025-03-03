@@ -9,3 +9,7 @@ ARG APP_VERSION="api"
 ENV APP_VERSION=$APP_VERSION
 
 COPY . .
+
+EXPOSE 80
+
+CMD ["fastapi", "run", "app_api.py", "--host", "0.0.0.0", "--port", "80"]

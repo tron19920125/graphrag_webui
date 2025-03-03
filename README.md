@@ -71,6 +71,14 @@ az login
 
 ### Deploy API
 
+You need copy env file and update first.
+
+```bash
+cp .env.example .env
+```
+
+Deploy API:
+
 ```bash
 bash deploy_api.sh
 ```

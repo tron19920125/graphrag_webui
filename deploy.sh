@@ -4,19 +4,11 @@ set -e
 
 sudo chmod 666 /var/run/docker.sock
 
-APP_NAME=$1
-
 if [ -z "$APP_NAME" ]; then
   echo "APP_NAME is not set"
   exit 1
 fi
 echo "app name: $APP_NAME"
-
-# if DOCKER_FILE is not set, use default Dockerfile
-if [ -z "$DOCKER_FILE" ]; then
-  DOCKER_FILE="Dockerfile"
-fi
-echo "docker file: $DOCKER_FILE"
 
 # if APP_CPU is not set, use default 4.0
 if [ -z "$APP_CPU" ]; then
@@ -66,17 +58,36 @@ if [ -z "$LOCATION" ]; then
 fi
 echo "location: $LOCATION"
 
+echo "Creating Resource Group..."
+az group create \
+  --name $RESOURCE_GROUP \
+  --location $LOCATION
+
+echo "Creating Container Registry..."
+az acr create \
+  --name $ACR_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku Basic
+
+echo "Creating Container App Environment..."
+az containerapp env create \
+  --name $ENV_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION
+
 VERSION=$(date +"%Y%m%d%H%M")
 UPDATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 IMAGE=$ACR_NAME.azurecr.io/$APP_NAME:$VERSION
 IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
 echo "image: $IMAGE"
 
+az acr login --name $ACR_NAME
+
 docker build --build-arg APP_VERSION=$VERSION \
   --build-arg UPDATE_TIME="$UPDATE_TIME" \
   -f $DOCKER_FILE \
   -t $IMAGE .
-az acr login --name $ACR_NAME
 
 docker images | grep $APP_NAME | grep $VERSION
 
@@ -85,6 +96,19 @@ docker push $IMAGE
 ACR_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
 
 docker images | grep $APP_NAME | grep $VERSION
+
+REGISTRY_USERNAME=$(az acr credential show --name $ACR_NAME --query "username" -o tsv)
+REGISTRY_PASSWORD=$(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv)
+
+if [ -z "$REGISTRY_USERNAME" ]; then
+  echo "REGISTRY_USERNAME is not set"
+  exit 1
+fi
+
+if [ -z "$REGISTRY_PASSWORD" ]; then
+  echo "REGISTRY_PASSWORD is not set"
+  exit 1
+fi
 
 echo "Creating Container App..."
 RES=$(az containerapp create \
@@ -97,8 +121,8 @@ RES=$(az containerapp create \
   --min-replicas $MIN_REPLICAS \
   --max-replicas $MAX_REPLICAS \
   --registry-server $ACR_SERVER \
-  --registry-username $(az acr credential show --name $ACR_NAME --query "username" -o tsv) \
-  --registry-password $(az acr credential show --name $ACR_NAME --query "passwords[0].value" -o tsv) \
+  --registry-username $REGISTRY_USERNAME \
+  --registry-password $REGISTRY_PASSWORD \
   --cpu $APP_CPU \
   --memory $APP_MEMORY)
 
