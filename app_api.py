@@ -46,6 +46,17 @@ def check_api_key(project_name: str, api_key: str):
 
 
 # -----------------------------------------------------------------
+@app.get("/")
+def ok():
+    return {"message": "ok"}
+
+
+@app.get("/api")
+def ok_api():
+    return {"message": "ok"}
+
+
+# -----------------------------------------------------------------
 @app.post("/api/local_search")
 def local_search(item: Item, api_key: str = Header(...)):
     try:
