@@ -82,6 +82,8 @@ if ! az containerapp env show --name $ENV_NAME --resource-group $RESOURCE_GROUP;
     --name $ENV_NAME \
     --resource-group $RESOURCE_GROUP \
     --location $LOCATION
+  echo "Waiting for background job to complete..."
+  sleep 10
 fi
 
 VERSION=$(date +"%Y%m%d%H%M")
