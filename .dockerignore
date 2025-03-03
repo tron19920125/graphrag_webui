@@ -30,3 +30,5 @@ README.md
 cache
 output
 logs
+deploy.sh
+deploy_api.sh
