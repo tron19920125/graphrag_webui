@@ -36,30 +36,7 @@ class Item(BaseModel):
     community_level: int = 2
     dynamic_community_selection: bool = False
     query_source: bool = False
-    user_cache: bool = False
     context_data: bool = False
-
-
-local_search_cache = {}
-local_search_cache_limit = 20
-
-
-def get_local_search_cache(item: Item):
-    if not item.user_cache:
-        return None
-
-    if item.query in local_search_cache:
-        return local_search_cache[item.query]
-    return None
-
-
-def set_local_search_cache(item: Item, result: any):
-    if not item.user_cache:
-        return
-
-    if len(local_search_cache) >= local_search_cache_limit:
-        local_search_cache.pop(list(local_search_cache.keys())[0])
-    local_search_cache[item.query] = result
 
 
 def check_api_key(project_name: str, api_key: str):
@@ -73,10 +50,6 @@ def check_api_key(project_name: str, api_key: str):
 def local_search(item: Item, api_key: str = Header(...)):
     try:
         check_api_key(item.project_name, api_key)
-
-        cached_result = get_local_search_cache(item)
-        if cached_result:
-            return cached_result
 
         (response, context_data) = run_local_search(
             root_dir=project_path(item.project_name),
@@ -99,8 +72,6 @@ def local_search(item: Item, api_key: str = Header(...)):
 
         if item.context_data:
             result["context_data"] = context_data
-
-        set_local_search_cache(item, result)
 
         return result
     except Exception as e:
