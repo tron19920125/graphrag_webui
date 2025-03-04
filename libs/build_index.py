@@ -2,9 +2,10 @@ import time
 from dotenv import load_dotenv
 import streamlit as st
 from pathlib import Path
-from libs.common import is_admin, run_command
+from libs.common import run_command
 from theodoretools.fs import get_directory_size
 from theodoretools.st import run_shell_command
+from libs.save_settings import list_and_download_files
 
 
 def build_index(project_name: str):
@@ -20,7 +21,7 @@ def build_index(project_name: str):
 
             target_dir = f"/app/projects/{project_name}"
 
-            run_shell_command(['graphrag', 'index'], target_dir)
+            run_shell_command(["graphrag", "index", "--memprofile"], target_dir)
 
     cache_size_mb = get_directory_size(f"/app/projects/{project_name}/cache")
     if cache_size_mb > 0:
@@ -37,3 +38,5 @@ def build_index(project_name: str):
         run_command(f"rm -rf /app/projects/{project_name}/output/*")
         st.success("All files deleted.")
         time.sleep(3)
+
+    list_and_download_files(f"/app/projects/{project_name}/logs", "Logs")

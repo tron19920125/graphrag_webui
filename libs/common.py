@@ -14,8 +14,7 @@ from dotenv import load_dotenv
 
 
 def load_project_env(project_name: str):
-    load_dotenv(
-        dotenv_path=f"/app/projects/{project_name}/.env", override=True)
+    load_dotenv(dotenv_path=f"/app/projects/{project_name}/.env", override=True)
 
 
 def project_path(project_name: str):
@@ -28,8 +27,7 @@ def load_graphrag_config(project_name: str):
 
 def set_venvs(project_name: str):
     os.environ["GRAPHRAG_ENTITY_EXTRACTION_PROMPT_FILE"] = str(
-        Path("/app/projects") / project_name /
-        "prompts" / "entity_extraction.txt"
+        Path("/app/projects") / project_name / "prompts" / "entity_extraction.txt"
     )
     os.environ["GRAPHRAG_COMMUNITY_REPORT_PROMPT_FILE"] = (
         f"/app/projects/{project_name}/prompts/community_report.txt"
@@ -58,7 +56,7 @@ def is_built(project_name: str):
         "create_final_nodes.parquet",
         "stats.json",
         "create_final_documents.parquet",
-        "create_final_relationships.parquet"
+        "create_final_relationships.parquet",
     ]
 
     return set(elements_set).issubset(set(files))
@@ -81,8 +79,17 @@ def list_files_and_sizes(directory: str):
         for file in files:
             file_path = os.path.join(root, file)
             file_size_bytes = os.path.getsize(file_path)
-            file_size_mb = file_size_bytes / (1024 * 1024)
-            file_list.append((file, file_path, f"({file_size_mb:.4f}MB)"))
+            if file_size_bytes == 0:
+                file_list.append((file, file_path, f"0"))
+            elif file_size_bytes < 1024:
+                file_list.append((file, file_path, f"({file_size_bytes:.5f}B)"))
+            elif file_size_bytes < 1024 * 1024:
+                file_size_kb = file_size_bytes / 1024
+                file_list.append((file, file_path, f"({file_size_kb:.5f}KB)"))
+            else:
+                file_size_mb = file_size_bytes / (1024 * 1024)
+                file_list.append((file, file_path, f"({file_size_mb:.5f}MB)"))
+
     return file_list
 
 
@@ -111,7 +118,9 @@ def is_project_admin(project_name: str):
         and st.session_state["authentication_status"]
     ):
         usernmae = st.session_state["username"].lower()
-        return usernmae.endswith("_admin") and project_name.startswith(usernmae.replace("_admin", ""))
+        return usernmae.endswith("_admin") and project_name.startswith(
+            usernmae.replace("_admin", "")
+        )
 
     return True
 

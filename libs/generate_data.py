@@ -19,7 +19,7 @@ from theodoretools.url import url_to_name
 import libs.pdf_txt as pdf_txt
 from theodoretools.fs import get_directory_size
 
-from libs.save_settings import input_files
+from libs.save_settings import list_and_download_files
 
 
 def create_zip(directory, output_path):
@@ -94,13 +94,25 @@ def generate_data(project_name: str):
             time.sleep(3)
             st.success("All files deleted.")
 
-    st.markdown(f"--------------")
-    input_cache_size_mb = get_directory_size(f"/app/projects/{project_name}/input")
+    def get_files_size(directory: str, exclude_extensions=[]):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(directory):
+            for f in filenames:
+                if any(f.endswith(ext) for ext in exclude_extensions):
+                    continue
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+
+        return total_size
+
+    input_cache_size_mb = get_files_size(f"/app/projects/{project_name}/input")
+
     if input_cache_size_mb > 0:
+        st.markdown(f"--------------")
         st.markdown(f"### Input files")
 
         if st.button(
-            f"Download input files ({input_cache_size_mb} MB)",
+            f"Download input files ({input_cache_size_mb} bytes)",
             key=f"downloads_input_files_{project_name}",
             icon="💾",
         ):
@@ -116,14 +128,15 @@ def generate_data(project_name: str):
                 )
 
         if st.button(
-            f"Clear input files ({input_cache_size_mb} MB)",
+            f"Clear input files ({input_cache_size_mb} bytes)",
             key=f"delete_all_input_files_{project_name}",
             icon="🗑️",
         ):
             run_command(f"rm -rf /app/projects/{project_name}/input/*")
             time.sleep(3)
             st.success("All files deleted.")
-        input_files(project_name)
+
+        list_and_download_files(f"/app/projects/{project_name}/input", "Input Files")
 
 
 def convert_file(file_path, file, project_name, pdf_vision_option):
