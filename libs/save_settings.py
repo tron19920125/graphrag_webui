@@ -73,13 +73,12 @@ def setting_editor(
         st.success(f"Settings restored: {file_path}, please refresh the page.")
 
 
-def input_files(project_name: str):
-    files_path = f"/app/projects/{project_name}/input"
+def list_and_download_files(files_path: str, title: str = "Files"):
     if not os.path.exists(files_path):
         os.makedirs(files_path)
 
     files = list_files_and_sizes(files_path)
-    st.markdown(f"Files: `{len(files)}`")
+    st.markdown(f"{title}: `{len(files)}`")
     if len(files) > 0:
         for file in files:
             with open(file[1], "rb") as f:
@@ -87,7 +86,7 @@ def input_files(project_name: str):
                     label=f"📄 {file[0]} `{file[2]}`",
                     data=f,
                     file_name=file[0],
-                    key=f"{project_name}-input-{file[0]}",
+                    key=f"{files_path}-input-{file[0]}",
                 )
 
 
