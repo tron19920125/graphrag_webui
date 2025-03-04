@@ -141,8 +141,9 @@ def convert_file(file_path, file, project_name, pdf_vision_option):
 
 def excel_to_txt(file_path, project_name):
     file_name = os.path.basename(file_path)
-    with open(file_path, "rb") as file:
-        excel_data = pd.ExcelFile(file.read())
+    # 根据文件扩展名选择适当的引擎
+    if file_path.endswith(".xlsx"):
+        excel_data = pd.ExcelFile(file_path, engine='openpyxl')
         with open(
             f"/app/projects/{project_name}/input/{file_name}.txt", "w", encoding="utf-8"
         ) as f:
@@ -151,10 +152,39 @@ def excel_to_txt(file_path, project_name):
                 df = excel_data.parse(sheet_name)
                 for index, row in df.iterrows():
                     for column in df.columns:
-                        if not row[column]:
-                            continue
-                        f.write(f"【{column}】: {row[column]} ")
+                        if pd.notna(row[column]):
+                            f.write(f"【{column}】: {row[column]} ")
                     f.write(f"\n\n")
+    elif file_path.endswith(".csv"):
+        # 对于CSV文件，直接读取为DataFrame
+        df = pd.read_csv(file_path, encoding='utf-8')
+        with open(
+            f"/app/projects/{project_name}/input/{file_name}.txt", "w", encoding="utf-8"
+        ) as f:
+            for column in df.columns:
+                f.write(f"{column}\n\n")
+            for index, row in df.iterrows():
+                for column in df.columns:
+                    if pd.notna(row[column]):
+                        f.write(f"【{column}】: {row[column]} ")
+                f.write(f"\n\n")
+    else:
+        # 如果是其他格式，尝试使用openpyxl
+        try:
+            excel_data = pd.ExcelFile(file_path, engine='openpyxl')
+            with open(
+                f"/app/projects/{project_name}/input/{file_name}.txt", "w", encoding="utf-8"
+            ) as f:
+                for sheet_name in excel_data.sheet_names:
+                    f.write(f"{sheet_name}\n\n")
+                    df = excel_data.parse(sheet_name)
+                    for index, row in df.iterrows():
+                        for column in df.columns:
+                            if pd.notna(row[column]):
+                                f.write(f"【{column}】: {row[column]} ")
+                        f.write(f"\n\n")
+        except Exception as e:
+            st.error(f"无法处理文件 {file_name}: {str(e)}")
 
 
 def prepare_file(file_path, file, project_name):
@@ -186,12 +216,25 @@ def has_download_files(file_path: str):
     if not file_path.endswith(".xlsx") and not file_path.endswith(".csv"):
         return False
 
-    with open(file_path, "rb") as f:
-        df = pd.read_excel(f.read())
-        with st.spinner(f"Processing ..."):
-            for index, row in df.iterrows():
-                if "doc_url" in row:
-                    return True
+    # 根据文件扩展名选择适当的引擎
+    if file_path.endswith(".xlsx"):
+        df = pd.read_excel(file_path, engine='openpyxl')
+    elif file_path.endswith(".csv"):
+        # 对于CSV文件，应该使用pd.read_csv而不是pd.read_excel
+        df = pd.read_csv(file_path, encoding='utf-8')
+    else:
+        # 如果无法确定，尝试使用openpyxl
+        df = pd.read_excel(file_path, engine='openpyxl')
+    
+    # 检查是否有doc_url列
+    if 'doc_url' in df.columns:
+        return True
+    
+    # 检查每一行是否有doc_url键
+    for index, row in df.iterrows():
+        if "doc_url" in row:
+            return True
+    
     return False
 
 
@@ -199,15 +242,23 @@ def download_files_from_xlsx_csv(file_path, file, project_name):
     if not file_path.endswith(".xlsx") and not file_path.endswith(".csv"):
         return
 
-    with open(file_path, "rb") as f:
-        df = pd.read_excel(f.read())
-        st.write(df)
-        df_count = len(df) - 1
-        with st.spinner(f"Processing ..."):
-            for index, row in df.iterrows():
-                if "doc_url" in row:
-                    doc_url = row["doc_url"]
-                    download_file(doc_url, index, df_count, project_name)
+    # 根据文件扩展名选择适当的引擎
+    if file_path.endswith(".xlsx"):
+        df = pd.read_excel(file_path, engine='openpyxl')
+    elif file_path.endswith(".csv"):
+        # 对于CSV文件，使用pd.read_csv
+        df = pd.read_csv(file_path, encoding='utf-8')
+    else:
+        # 如果无法确定，尝试使用openpyxl
+        df = pd.read_excel(file_path, engine='openpyxl')
+    
+    st.write(df)
+    df_count = len(df) - 1
+    with st.spinner(f"Processing ..."):
+        for index, row in df.iterrows():
+            if "doc_url" in row:
+                doc_url = row["doc_url"]
+                download_file(doc_url, index, df_count, project_name)
 
 
 def download_file(doc_url, index, df_count, project_name):
