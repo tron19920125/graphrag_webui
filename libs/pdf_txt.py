@@ -10,6 +10,7 @@ import concurrent.futures
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.formrecognizer import DocumentAnalysisClient
 from libs.common import load_project_env, load_graphrag_config
+import json
 
 
 def image_to_base64(image_path: str):
@@ -29,6 +30,7 @@ class PageTask:
         self.base_name = f"/app/projects/{project_name}/pdf_cache"
         self.img_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png"
         self.txt_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png.txt"
+        self.cache_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.cache.json"
         self.ai_txt_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png.{self.pdf_vision_option_format}.txt"
         self.page_num = page_num
         self.graphrag_config = load_graphrag_config(project_name)
@@ -112,7 +114,7 @@ class PageTask:
             model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
-
+        self.write_cache(completion.to_json())
         return prompt, ai_txt
 
     def gpt_vision_txt(self):
@@ -142,8 +144,13 @@ class PageTask:
             model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
-
+        self.write_cache(completion.to_json())
         return prompt, ai_txt
+
+    def write_cache(self, data):
+        with open(self.cache_path, "w") as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+
 
     def gpt_vision_txt_by_txt(self):
         base64_string = image_to_base64(self.img_path)
@@ -170,7 +177,7 @@ class PageTask:
             model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
-
+        self.write_cache(completion.to_json())
         return prompt, ai_txt
 
     def gpt_vision_txt_by_image(self):
@@ -199,7 +206,7 @@ class PageTask:
             model=self.graphrag_config.llm.model,
         )
         ai_txt = completion.choices[0].message.content
-
+        self.write_cache(completion.to_json())
         return prompt, ai_txt
 
 
