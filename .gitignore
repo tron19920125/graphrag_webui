@@ -18,3 +18,4 @@ lancedb/*
 *.egg-info/
 build/
 dist/
+*.csv
