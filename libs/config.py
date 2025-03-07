@@ -2,6 +2,7 @@ import os
 import time
 from dotenv import load_dotenv
 from datetime import datetime
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
@@ -84,3 +85,19 @@ pdf_gpt_vision_prompt_azure = """我给你发一张pdf的截图，这是azure的
 
 同时，我也提取了这个截图的原始文字给你参考，目的是帮助你更准确的提取信息而不至于提取错误的文字，截图里的所有原始文字如下：
 {page_txt}"""
+
+class Settings(BaseSettings):
+    server_port: int = 20213
+    cors_allowed_origins: list = ["*"]  # Edit the list to restrict access.
+    root: str = "."
+    data: str = "./output"
+    community_level: int = 2
+    dynamic_community_selection: bool = False
+    response_type: str = "Multiple Paragraphs"
+
+    @property
+    def website_address(self) -> str:
+        return f"http://127.0.0.1:{self.server_port}"
+
+
+settings = Settings()

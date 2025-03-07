@@ -19,3 +19,5 @@ lancedb/*
 build/
 dist/
 *.csv
+streaming_test.py
+sample_output.md
