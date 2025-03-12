@@ -20,13 +20,14 @@ from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
 from libs import search
 from libs.gtypes import ChatCompletionMessageParam, ChatCompletionStreamOptionsParam, ChatCompletionToolParam, ChatQuestionGen
-from libs.gtypes import CompletionCreateParamsBase as ChatCompletionRequest
+from libs.gtypes import CompletionCreateParamsBase as ChatCompletionRequest, GenerateDataRequest
 from libs import consts
 from graphrag.query.context_builder.conversation_history import ConversationHistory
 import logging
 from openai.types import CompletionUsage
 from fastapi.encoders import jsonable_encoder
 from pathlib import Path
+import tempfile
 
 load_dotenv()
 
@@ -83,6 +84,23 @@ async def init_search_engine(request: ChatCompletionRequest):
     else:
         search_engine = await search.load_basic_search_engine(config, data)
     return search_engine
+
+def guess_file_type(file_name: str) -> str:
+    if file_name.endswith(".pdf"):
+        return "pdf"
+    elif file_name.endswith(".docx") or file_name.endswith(".doc"):
+        return "docx"
+    elif file_name.endswith(".xlsx") or file_name.endswith(".xls"):
+        return "xlsx"
+    elif file_name.endswith(".pptx") or file_name.endswith(".ppt"):
+        return "pptx"
+    elif file_name.endswith(".csv"):
+        return "csv"
+    elif file_name.endswith(".txt"):
+        return "txt"
+    else:
+        raise Exception(f"Unsupported file type: {file_name}")
+    
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, api_key: str = Header(...)):
@@ -164,7 +182,7 @@ async def handle_stream_response(request, search, conversation_history):
                     )
                 ]
             )
-            yield f"{chunk.model_dump_json()}\n\n"
+            yield f"data: {chunk.model_dump_json()}\n\n"
             token_index += 1
             full_response += token
 
@@ -191,7 +209,8 @@ async def handle_stream_response(request, search, conversation_history):
                 ),
             ],
         )
-        yield f"{chunk.model_dump_json()}\n\n"
+        yield f"data: {chunk.model_dump_json()}\n\n"
+        yield f"data: [DONE]\n\n"
 
     return StreamingResponse(wrapper_astream_search(), media_type="text/event-stream")
 

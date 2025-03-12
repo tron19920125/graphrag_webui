@@ -2,6 +2,19 @@ from typing import Optional, Dict, List, Union, Literal, Any
 
 from pydantic import BaseModel
 
+class GenerateDataFileItem(BaseModel):
+    file_name: str
+    file_url: str
+    file_type: Optional[str]
+
+
+class GenerateDataRequest(BaseModel):
+    project_name: str
+    is_local_directory: bool
+    files: Optional[List[GenerateDataFileItem]]
+    directory: Optional[str]
+    
+
 
 class ChatCompletionMessageParam(BaseModel):
     content: str
