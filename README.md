@@ -1,6 +1,12 @@
-# GraphRAG WebUI
+# GraphRAG WebUI 🙋
 
 A web interface for [GraphRAG](https://github.com/microsoft/graphrag).
+
+Our team members:
+
+- [@Shuang](https://github.com/Shuang-MS)
+- [@Tron](https://github.com/tron19920125)
+- [@Alfred](https://github.com/richardeee)
 
 ## Cloud Resources
 
