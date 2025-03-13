@@ -1,5 +1,11 @@
 
 from enum import Enum
+from pydantic import BaseModel
+
+class ArgConfig(BaseModel):
+    project: str
+    input_dir: str
+    pdf_vision_option: str
 
 class PreviewType(Enum):
     entities = "entities"
