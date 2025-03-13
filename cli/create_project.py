@@ -8,47 +8,36 @@ from graphrag.cli.initialize import initialize_project_at
 
 logger = get_logger('create_project_cli')
 
+root_project_dir = os.path.dirname(os.path.dirname(__file__))
+
 def overwrite_settings_yaml(project_dir, new_project_name, create_db_type = "ai_search"):
-    """重写 settings.yaml 文件，确保使用简单的相对路径，避免路径套娃问题"""
     settings_yaml = f"{project_dir}/settings.yaml"
 
-    # 备份原始文件作为 settings_default.yaml
     run_command(f"cp {project_dir}/settings.yaml {project_dir}/settings_default.yaml")
 
-    root_project_dir = os.path.dirname(os.path.dirname(__file__))
+    template_settings_yaml = f"{root_project_dir}/template/setting_{create_db_type}_cli.yaml"
 
-    template_settings_yaml = f"{root_project_dir}/template/setting_{create_db_type}.yaml"
-
-    # 设置容器名称
     container_name = f"{config.app_name}_{new_project_name}"
     
-    # 读取模板并进行替换
     with open(template_settings_yaml, "r") as t:
         with open(settings_yaml, "w") as f:
             new_settings_yaml = t.read().replace(
                 "container_name: default", f"container_name: {container_name}"
             ).replace(
-                'base_dir: "logs"', 'base_dir: "logs"'  # 保持相对路径不变
+                'base_dir: "cache"', f'base_dir: "/app/{project_dir}/cache"'
             ).replace(
-                'base_dir: "output"', 'base_dir: "output"'  # 保持相对路径不变
+                'base_dir: "logs"', f'base_dir: "/app/{project_dir}/logs"'
             ).replace(
-                "db_uri: 'lancedb'", "db_uri: 'lancedb'"  # 保持原样
+                'base_dir: "output"', f'base_dir: "/app/{project_dir}/output"'
+            ).replace(
+                "db_uri: 'lancedb'", f"db_uri: '/app/{project_dir}/lancedb'"
             )
-            
-            # 确保没有项目名称出现在路径中
-            new_settings_yaml = new_settings_yaml.replace(
-                f'projects/{new_project_name}/', ''
-            ).replace(
-                f'projects\\{new_project_name}\\', ''
-            )
-            
             f.write(new_settings_yaml)
     
-    logger.info(f"配置文件已创建: {settings_yaml}，使用简单相对路径")
 
-def overwrite_settings_env(root):
-    settings_env = f"{root}/.env"
-    template_settings_env = f"{os.path.dirname(__file__)}/template/.env"
+def overwrite_settings_env(root_dir):
+    settings_env = f"{root_dir}/.env"
+    template_settings_env = f"{root_project_dir}/template/.env"
     with open(template_settings_env, "r") as t:
         with open(settings_env, "w") as f:
             f.write(t.read())
