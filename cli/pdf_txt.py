@@ -2,24 +2,34 @@ import fitz
 from openai import AzureOpenAI
 import os
 import base64
-import streamlit as st
-from libs.blob import upload_file
-from libs.save_settings import get_setting_file
+import json
+
 import libs.config as config
+
+from cli.blob import upload_file
+from cli.common import load_project_env, load_graphrag_config, project_path
+from cli.logger import get_logger
+
 import concurrent.futures
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.formrecognizer import DocumentAnalysisClient
-from libs.common import load_project_env, load_graphrag_config
-import json
 
-root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+logger = get_logger('pdf_txt')
+
+
+def get_setting_file(file_path: str, default_prompt: str = ""):
+    if not os.path.exists(file_path):
+        return default_prompt
+
+    with open(file_path, "r") as f:
+        prompt = f.read()
+        return prompt
 
 
 def image_to_base64(image_path: str):
     with open(image_path, "rb") as image_file:
         base64_encoded = base64.b64encode(image_file.read()).decode("utf-8")
     return base64_encoded
-
 
 class PageTask:
 
@@ -29,7 +39,7 @@ class PageTask:
         self.project_name = project_name
         self.pdf_vision_option = pdf_vision_option
         self.pdf_vision_option_format = pdf_vision_option.replace(" ", "")
-        self.base_name = f"{root_dir}/projects/{project_name}/pdf_cache"
+        self.base_name = f"{project_path(project_name)}/pdf_cache"
         self.img_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png"
         self.txt_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.png.txt"
         self.cache_path = f"{self.base_name}/{self.pdf_name}_page_{page_num + 1}.cache.json"
@@ -85,9 +95,9 @@ class PageTask:
             # set cache
             with open(self.ai_txt_path, "w") as txt_file:
                 txt_file.write(ai_txt)
-                st.write(f"[{self.page_num}/{self.doc.page_count}] {self.ai_txt_path}")
+                logger.info(f"[{self.page_num}/{self.doc.page_count}] {self.ai_txt_path}")
         except Exception as e:
-            st.warning(
+            logger.warning(
                 f"[{self.page_num}/{self.doc.page_count}] `{self.pdf_name}` generated an exception: {e}"
             )
 
@@ -122,7 +132,7 @@ class PageTask:
     def gpt_vision_txt(self):
         base64_string = image_to_base64(self.img_path)
         settings_file = (
-            f"{root_dir}/projects/{self.project_name}/prompts/pdf_gpt_vision_prompt.txt"
+            f"{project_path(self.project_name)}/prompts/pdf_gpt_vision_prompt.txt"
         )
         prompt = get_setting_file(settings_file, config.pdf_gpt_vision_prompt).format(
             page_txt=self.page_to_txt()
@@ -156,7 +166,7 @@ class PageTask:
 
     def gpt_vision_txt_by_txt(self):
         base64_string = image_to_base64(self.img_path)
-        settings_file = f"{root_dir}/projects/{self.project_name}/prompts/pdf_gpt_vision_prompt_by_text.txt"
+        settings_file = f"{project_path(self.project_name)}/prompts/pdf_gpt_vision_prompt_by_text.txt"
         prompt = get_setting_file(
             settings_file, config.pdf_gpt_vision_prompt_by_text
         ).format(page_txt=self.page_to_txt())
@@ -185,7 +195,7 @@ class PageTask:
     def gpt_vision_txt_by_image(self):
         base64_string = image_to_base64(self.img_path)
 
-        settings_file = f"{root_dir}/projects/{self.project_name}/prompts/pdf_gpt_vision_prompt_by_image.txt"
+        settings_file = f"{project_path(self.project_name)}/prompts/pdf_gpt_vision_prompt_by_image.txt"
         prompt = get_setting_file(
             settings_file, config.pdf_gpt_vision_prompt_by_image
         ).format(page_txt=self.page_to_txt())
@@ -215,7 +225,7 @@ class PageTask:
 def save_pdf_pages_as_images(pdf_path: str, project_name: str, pdf_vision_option: str):
     pdf_file_name = os.path.basename(pdf_path)
     pdf_ai_txt_path = f"{pdf_path}.{pdf_vision_option.replace(" ", "")}.txt"
-    base_dir = f"{root_dir}/projects/{project_name}/pdf_cache"
+    base_dir = f"{project_path(project_name)}/pdf_cache"
     os.makedirs(base_dir, exist_ok=True)
 
     doc = fitz.open(pdf_path)
@@ -236,9 +246,9 @@ def save_pdf_pages_as_images(pdf_path: str, project_name: str, pdf_vision_option
             page_num = future_to_page[future]
             try:
                 future.result()
-                st.write(f"[{page_num}/{doc.page_count}] `{pdf_file_name}` done")
+                logger.info(f"[{page_num}/{doc.page_count}] `{pdf_file_name}` done")
             except Exception as exc:
-                st.warning(
+                logger.warning(
                     f"[{page_num}/{doc.page_count}] `{pdf_file_name}` generated an exception: {exc}"
                 )
 
@@ -267,7 +277,7 @@ def di_analyze_read(img_path: str, project_name: str):
     key = os.getenv("DOCUMENT_INTELLIGENCE_KEY", "")
 
     if not endpoint or not key:
-        st.error(
+        logger.error(
             "Your need to set DOCUMENT_INTELLIGENCE_URL and DOCUMENT_INTELLIGENCE_KEY in .env file."
         )
         return ""
