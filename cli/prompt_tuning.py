@@ -4,6 +4,7 @@ import graphrag.api as api
 from graphrag.config.load_config import load_config
 from pathlib import Path
 import asyncio
+import re
 
 from cli.logger import get_logger
 
@@ -30,6 +31,9 @@ async def prompt_tuning(project_name: str):
     entity_summarization_prompt_path = f"{base_path}/prompts/summarize_descriptions.txt" 
     community_summarization_prompt_path = f"{base_path}/prompts/community_report.txt"
 
+    # fix wrong prompt
+    entity_extraction_prompt = fix_wrong_prompt(entity_extraction_prompt)
+
     # Write files concurrently
     await asyncio.gather(
         write_prompt_file(entity_extraction_prompt_path, entity_extraction_prompt),
@@ -47,3 +51,28 @@ async def write_prompt_file(path: str, content: str):
         file.write(content.encode(encoding="utf-8", errors="strict"))
     return True
 
+
+def sanitize_line(line: str):
+    if line.strip() == '':
+        return ''
+    if line.strip().startswith('(') and not line.strip().endswith(')'):
+        # 替换最后一个字符
+        line = line.strip()[:-1] + ')'
+    return line.strip()
+  
+def replace_func(match: re.Match):
+    group = match.group(1)
+    results = []
+    lines = group.split('\n')
+    results = []
+    for line in lines:
+        results.append(sanitize_line(line))
+    result = "\n".join(results)
+    return f"output: {result}#############################" 
+
+def fix_wrong_prompt(content: str):
+    """fix wrong prompt"""
+    # 正则匹配 output 和 #### 之间的内容, 支持多行, 可能出现多个output, 保持其余内容不变
+    pattern = r".*output:([\s\S]*?)#############################"
+    result = re.sub(pattern, replace_func, content)
+    return result
