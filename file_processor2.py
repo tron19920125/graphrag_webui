@@ -11,7 +11,7 @@ from cli.generate_data import  generate_data
 from cli.logger import get_logger
 from cli.index_preview import index_preview
 from cli.prompt_tuning import prompt_tuning
-from cli.build_index import build_index
+from cli.build_index import build_index, update_index
 from cli.create_project import init_graphrag_project
 from cli.upload_file import upload_files
 
@@ -114,6 +114,9 @@ def main():
         process_parser = subparsers.add_parser('build_index', help='build index')
         process_parser.add_argument('--project', help='specify project name', required=True)
 
+        process_parser = subparsers.add_parser('update_index', help='update index')
+        process_parser.add_argument('--project', help='specify project name', required=True)
+
         process_parser = subparsers.add_parser('test_config', help='test config')
         process_parser.add_argument('--project', help='specify project name', required=True)
 
@@ -162,6 +165,11 @@ def main():
             logger.info("=== start build index ===")
             build_index(args.project)
             logger.info("=== build index completed ===")
+            return 0
+        elif args.command == 'update_index':
+            logger.info("=== start update index ===")
+            update_index(args.project)
+            logger.info("=== update index completed ===")
             return 0
         elif args.command == 'test_config':
             logger.info("=== start test config ===")
