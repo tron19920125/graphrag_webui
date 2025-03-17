@@ -9,6 +9,7 @@ from cli.common import load_graphrag_config, project_path
 from cli.types import PreviewType, ArgConfig
 from cli.logger import get_logger
 from cli.create_project import init_graphrag_project
+from cli.build_index import build_index, update_index
 
 import libs.config as config
 
@@ -30,6 +31,12 @@ def main():
         init_parser = subparsers.add_parser('init', help='initialize graphrag project')
         init_parser.add_argument('--project', help='specify project name', required=False)
         
+        build_index_parser = subparsers.add_parser('build_index', help='build index')
+        build_index_parser.add_argument('--project', help='specify project name', required=True)
+
+        update_index_parser = subparsers.add_parser('update_index', help='update index')
+        update_index_parser.add_argument('--project', help='specify project name', required=True)
+        
         args = parser.parse_args()
 
         # process subcommand
@@ -41,6 +48,17 @@ def main():
             else:
                 logger.error(f"project {args.project} initialization failed")
                 return 1
+
+        elif args.command == 'build_index':
+            logger.info("=== start build index ===")
+            build_index(args.project)
+            logger.info("=== build index completed ===")
+            return 0
+        elif args.command == 'update_index':
+            logger.info("=== start update index ===")
+            update_index(args.project)
+            logger.info("=== update index completed ===")
+            return 0
         else:
             parser.print_help()
             return 1
