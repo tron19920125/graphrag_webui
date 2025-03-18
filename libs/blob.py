@@ -3,11 +3,7 @@ from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPerm
 from datetime import datetime, timedelta, timezone
 import streamlit as st
 from dotenv import load_dotenv
-
-load_dotenv()
-
-connection_string = os.getenv("DATA_AZURE_CONNECTION_STRING", "")
-
+from libs.common import load_project_env
 
 def get_container_name(project_name):
     container_name = "graphrag" + project_name + "cache"
@@ -17,6 +13,10 @@ def get_container_name(project_name):
 
 
 def upload_file(project_name, file_path):
+
+    load_project_env(project_name)
+    
+    connection_string = os.getenv("DATA_AZURE_CONNECTION_STRING", "")
     
     if not connection_string:
         return
@@ -44,12 +44,18 @@ def upload_file(project_name, file_path):
         
         with open(file_path, "rb") as data:
             blob_client.upload_blob(data, overwrite=True, content_settings=content_settings)
-            container_client.set_container_access_policy(signed_identifiers=None, public_access="container")
+            container_client.set_container_access_policy(signed_identifiers={}, public_access="container")
     except Exception as e:
         st.error(f"Error uploading file {file_name}: {e}")
+        raise e
 
 
 def get_sas_url(project_name, blob_name):
+
+    load_project_env(project_name)
+    
+    connection_string = os.getenv("DATA_AZURE_CONNECTION_STRING", "")
+
     try:
         container_name = get_container_name(project_name)
 
