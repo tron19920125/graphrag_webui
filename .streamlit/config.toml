@@ -4,3 +4,4 @@ primaryColor="#00ADEF"
 
 [server]
 maxUploadSize = 800
+maxMessageSize = 350

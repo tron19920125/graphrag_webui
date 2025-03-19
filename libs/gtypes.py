@@ -57,6 +57,8 @@ class CompletionCreateParamsBase(BaseModel):
     top_logprobs: Optional[int] = None
     top_p: Optional[float] = 1.0
     user: Optional[str] = None
+    generate_question: Optional[bool] = False
+    generate_question_count: Optional[int] = 5
 
     def llm_chat_params(self) -> dict[str, Any]:
         return {
