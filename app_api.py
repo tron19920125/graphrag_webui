@@ -120,7 +120,7 @@ async def local_question_gen(request, context_data: dict):
         return questions.response
     except Exception as e:
         logger.error(msg=f"local_question_gen error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        return JSONResponse(status_code=400, detail="An internal error occurred. Please try again later.")
 
 async def attach_question_gen(base_response: dict, request, context_data: dict) -> dict:
     if not context_data or not isinstance(context_data, dict):
@@ -189,73 +189,42 @@ async def handle_sync_response(request, search, conversation_history):
 
 async def handle_stream_response(request, search, conversation_history):
     async def wrapper_astream_search():
-        token_index = 0
         chat_id = f"chatcmpl-{uuid.uuid4().hex}"
-        full_response = ""
         context_data = None
+        tokens = []
         async for token in search.astream_search(request.messages[-1].content, conversation_history):  # 调用原始的生成器
-            if token_index == 0:
-                token_index += 1
-                context_data = token
+            if context_data is None:
+                context_data = token  # capture context info on the first token
                 continue
-
-            chunk = ChatCompletionChunk(
-                id=chat_id,
-                created=int(time.time()),
-                model=request.model,
-                object="chat.completion.chunk",
-                choices=[
-                    Choice(
-                        index=token_index - 1,
-                        finish_reason=None,
-                        delta=ChoiceDelta(
-                            role="assistant",
-                            content=token
-                        )
-                    )
-                ]
-            )
+            tokens.append(token)
+            chunk = create_chunk(chat_id, tokens, request.model)
             yield f"data: {chunk.model_dump_json()}\n\n"
-            token_index += 1
-            full_response += token
 
-        content = ""
         # TODO: add reference and modify format
         # reference = get_reference(full_response)
         # if reference:
         #     content = f"\n{generate_ref_links(reference, request.model)}"
         finish_reason = 'stop'
-        chunk = ChatCompletionChunk(
-            id=chat_id,
-            created=int(time.time()),
-            model=request.model,
-            object="chat.completion.chunk",
-            choices=[
-                Choice(
-                    index=token_index,
-                    finish_reason=finish_reason,
-                    delta=ChoiceDelta(
-                        role="assistant",
-                        # content=result.context_data["entities"].head().to_string()
-                        content=content
-                    )
-                ),
-            ],
-        )
-        # if request.generate_question:
-        #     question_gen = await local_question_gen(request, result.context_data)
-        #     question_result = question_gen.response
-        #     result_json = completion.to_dict()
-        #     result_json['question_gen'] = question_result
-        #     return JSONResponse(content=result_json)
-        # else:
-        #     return JSONResponse(content=jsonable_encoder(completion))
+        chunk = create_chunk(chat_id, tokens, request.model)
+        chunk.choices[0].finish_reason = finish_reason
+        chunk.choices[0].delta.content = ""
+        chunk.choices[0].index = len(tokens)
         base_response = chunk.to_dict()  # Build a final response dict if necessary
         final_response = await attach_question_gen(base_response, request, context_data)
         yield f"data: {jsonable_encoder(final_response)}\n\n"
         yield f"data: [DONE]\n\n"
 
     return StreamingResponse(wrapper_astream_search(), media_type="text/event-stream")
+
+def create_chunk(chat_id, tokens, model):
+    # Minimal helper to form a ChatCompletionChunk from tokens.
+    return ChatCompletionChunk(
+        id=chat_id,
+        created=int(time.time()),
+        model=model,
+        object="chat.completion.chunk",
+        choices=[Choice(index=len(tokens)-1, finish_reason=None, delta=ChoiceDelta(role="assistant", content=tokens[-1]))]
+    )
 
 # -----------------------------------------------------------------
 @app.post("/api/local_search")
