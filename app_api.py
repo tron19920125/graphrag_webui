@@ -104,30 +104,30 @@ def guess_file_type(file_name: str) -> str:
         raise Exception(f"Unsupported file type: {file_name}")
     
 async def local_question_gen(request, context_data: dict):
-    try:
-        root = project_path(request.project_name)
-        data_dir=None
-        config, data = await search.load_context(root, data_dir)
-        llm = get_llm(config)
-        token_encoder = tiktoken.get_encoding(config.encoding_model)
-        question_gen = LocalQuestionGen(llm=llm, token_encoder=token_encoder, context_builder=None, context_builder_params=None)
-        question_history = [user_message.content for user_message in request.messages if user_message.role == "user"]
-        questions = await question_gen.agenerate(
-            question_history=question_history,
-            context_data=context_data,
-            question_count=request.generate_question_count,
-        )
-        return questions.response
-    except Exception as e:
-        logger.error(msg=f"local_question_gen error: {e}", exc_info=True)
-        return JSONResponse(status_code=400, detail="An internal error occurred. Please try again later.")
+    root = project_path(request.project_name)
+    data_dir=None
+    config, data = await search.load_context(root, data_dir)
+    llm = get_llm(config)
+    token_encoder = tiktoken.get_encoding(config.encoding_model)
+    question_gen = LocalQuestionGen(llm=llm, token_encoder=token_encoder, context_builder=None, context_builder_params=None)
+    question_history = [user_message.content for user_message in request.messages if user_message.role == "user"]
+    questions = await question_gen.agenerate(
+        question_history=question_history,
+        context_data=context_data,
+        question_count=request.generate_question_count,
+    )
+    return questions.response
 
 async def attach_question_gen(base_response: dict, request, context_data: dict) -> dict:
     if not context_data or not isinstance(context_data, dict):
         context_data = {}
     if request.generate_question and request.model == consts.INDEX_LOCAL:
-        question_gen = await local_question_gen(request, context_data)
-        base_response['question_gen'] = question_gen
+        try:
+            question_gen = await local_question_gen(request, context_data)
+            base_response['question_gen'] = question_gen
+        except Exception as e:
+            logger.error(f"Error in question generation: {e}")
+            base_response['question_gen'] = "Error in question generation"
     return base_response
 
 @app.post("/v1/chat/completions")
@@ -218,6 +218,7 @@ async def handle_stream_response(request, search, conversation_history):
 
 def create_chunk(chat_id, tokens, model):
     # Minimal helper to form a ChatCompletionChunk from tokens.
+    assert tokens, "Expected at least one token in the tokens list"
     return ChatCompletionChunk(
         id=chat_id,
         created=int(time.time()),
