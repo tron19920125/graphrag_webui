@@ -123,6 +123,8 @@ async def local_question_gen(request, context_data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 async def attach_question_gen(base_response: dict, request, context_data: dict) -> dict:
+    if not context_data or not isinstance(context_data, dict):
+        context_data = {}
     if request.generate_question and request.model == consts.INDEX_LOCAL:
         question_gen = await local_question_gen(request, context_data)
         base_response['question_gen'] = question_gen
