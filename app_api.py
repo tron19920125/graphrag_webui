@@ -30,6 +30,7 @@ from openai.types import CompletionUsage
 from fastapi.encoders import jsonable_encoder
 from pathlib import Path
 import tiktoken
+import json
 
 load_dotenv()
 
@@ -73,10 +74,9 @@ def check_api_key(project_name: str, api_key: str):
         raise Exception("Invalid api-key")
 
 async def init_search_engine(request: ChatCompletionRequest):
-    root = project_path(request.project_name),
-    data_dir=None,
-    root_dir = root[0]
-    config, data = await search.load_context(root_dir, data_dir)
+    root = project_path(request.project_name)
+    data_dir=None
+    config, data = await search.load_context(root, data_dir)
     if request.model == consts.INDEX_LOCAL:
         search_engine = await search.load_local_search_engine(config, data)
     elif request.model == consts.INDEX_GLOBAL:
@@ -104,22 +104,29 @@ def guess_file_type(file_name: str) -> str:
         raise Exception(f"Unsupported file type: {file_name}")
     
 async def local_question_gen(request, context_data: dict):
-    root = project_path(request.project_name),
-    data_dir=None,
-    root_dir = root[0]
-    config, data = await search.load_context(root_dir, data_dir)
-    llm = get_llm(config)
-    text_embedder = get_text_embedder(config)
-    token_encoder = tiktoken.get_encoding(config.encoding_model)
-    question_gen = LocalQuestionGen(llm=llm, token_encoder=token_encoder, context_builder=None, context_builder_params=None)
-    question_history = [user_message.content for user_message in request.messages if user_message.role == "user"]
-    questions = await question_gen.agenerate(
-        question_history=question_history,
-        context_data=context_data,
-        question_count=request.generate_question_count,
-    )
-    return questions
+    try:
+        root = project_path(request.project_name)
+        data_dir=None
+        config, data = await search.load_context(root, data_dir)
+        llm = get_llm(config)
+        token_encoder = tiktoken.get_encoding(config.encoding_model)
+        question_gen = LocalQuestionGen(llm=llm, token_encoder=token_encoder, context_builder=None, context_builder_params=None)
+        question_history = [user_message.content for user_message in request.messages if user_message.role == "user"]
+        questions = await question_gen.agenerate(
+            question_history=question_history,
+            context_data=context_data,
+            question_count=request.generate_question_count,
+        )
+        return questions.response
+    except Exception as e:
+        logger.error(msg=f"local_question_gen error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
+async def attach_question_gen(base_response: dict, request, context_data: dict) -> dict:
+    if request.generate_question and request.model == consts.INDEX_LOCAL:
+        question_gen = await local_question_gen(request, context_data)
+        base_response['question_gen'] = question_gen
+    return base_response
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, api_key: str = Header(...)):
@@ -141,7 +148,6 @@ async def chat_completions(request: ChatCompletionRequest, api_key: str = Header
     
 async def handle_sync_response(request, search, conversation_history):
     result = await search.asearch(request.messages[-1].content, conversation_history=conversation_history)
-    print(result)
     if isinstance(search, DRIFTSearch):
         response = result.response
         response = response["nodes"][0]["answer"]
@@ -175,14 +181,9 @@ async def handle_sync_response(request, search, conversation_history):
         )
     )
 
-    if request.generate_question:
-        question_gen = await local_question_gen(request, result.context_data)
-        question_result = question_gen.response
-        result_json = completion.to_dict()
-        result_json['question_gen'] = question_result
-        return JSONResponse(content=result_json)
-    else:
-        return JSONResponse(content=jsonable_encoder(completion))
+    base_response = completion.to_dict()
+    final_response = await attach_question_gen(base_response, request, result.context_data)
+    return JSONResponse(content=jsonable_encoder(final_response))
 
 async def handle_stream_response(request, search, conversation_history):
     async def wrapper_astream_search():
@@ -247,18 +248,10 @@ async def handle_stream_response(request, search, conversation_history):
         #     return JSONResponse(content=result_json)
         # else:
         #     return JSONResponse(content=jsonable_encoder(completion))
-        if request.generate_question:
-            question_gen = await local_question_gen(request, context_data)
-            question_result = question_gen.response
-            result_json = chunk.to_dict()
-            
-            result_json['question_gen'] = question_result
-            yield f"data: {result_json}\n\n"
-            yield f"data: [DONE]\n\n"
-        else:
-
-            yield f"data: {chunk.model_dump_json()}\n\n"
-            yield f"data: [DONE]\n\n"
+        base_response = chunk.to_dict()  # Build a final response dict if necessary
+        final_response = await attach_question_gen(base_response, request, context_data)
+        yield f"data: {jsonable_encoder(final_response)}\n\n"
+        yield f"data: [DONE]\n\n"
 
     return StreamingResponse(wrapper_astream_search(), media_type="text/event-stream")
 
