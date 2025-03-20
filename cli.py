@@ -6,7 +6,7 @@ from pathlib import Path
 import traceback
 
 from cli.common import load_graphrag_config, project_path
-from cli.types import PreviewType, ArgConfig
+from cli.cli_types import PreviewType, ArgConfig
 from cli.logger import get_logger
 from cli.create_project import init_graphrag_project
 from cli.build_index import build_index, update_index
