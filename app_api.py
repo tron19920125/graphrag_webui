@@ -1,6 +1,7 @@
 import os
 from libs.find_sources import get_query_sources, get_reference, generate_ref_links
 from libs.common import project_path, load_project_env
+from graphrag.query.llm.get_client import get_llm, get_text_embedder
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 from pydantic import BaseModel
@@ -18,6 +19,7 @@ from graphrag.query.structured_search.local_search.search import LocalSearch
 from graphrag.query.structured_search.basic_search.search import BasicSearch
 from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
+from graphrag.query.question_gen.local_gen import LocalQuestionGen
 from libs import search
 from libs.gtypes import ChatCompletionMessageParam, ChatCompletionStreamOptionsParam, ChatCompletionToolParam, ChatQuestionGen
 from libs.gtypes import CompletionCreateParamsBase as ChatCompletionRequest, GenerateDataRequest
@@ -27,7 +29,8 @@ import logging
 from openai.types import CompletionUsage
 from fastapi.encoders import jsonable_encoder
 from pathlib import Path
-import tempfile
+import tiktoken
+import json
 
 load_dotenv()
 
@@ -71,10 +74,9 @@ def check_api_key(project_name: str, api_key: str):
         raise Exception("Invalid api-key")
 
 async def init_search_engine(request: ChatCompletionRequest):
-    root = project_path(request.project_name),
-    data_dir=None,
-    root_dir = root[0]
-    config, data = await search.load_context(root_dir, data_dir)
+    root = project_path(request.project_name)
+    data_dir=None
+    config, data = await search.load_context(root, data_dir)
     if request.model == consts.INDEX_LOCAL:
         search_engine = await search.load_local_search_engine(config, data)
     elif request.model == consts.INDEX_GLOBAL:
@@ -101,6 +103,32 @@ def guess_file_type(file_name: str) -> str:
     else:
         raise Exception(f"Unsupported file type: {file_name}")
     
+async def local_question_gen(request, context_data: dict):
+    root = project_path(request.project_name)
+    data_dir=None
+    config, data = await search.load_context(root, data_dir)
+    llm = get_llm(config)
+    token_encoder = tiktoken.get_encoding(config.encoding_model)
+    question_gen = LocalQuestionGen(llm=llm, token_encoder=token_encoder, context_builder=None, context_builder_params=None)
+    question_history = [user_message.content for user_message in request.messages if user_message.role == "user"]
+    questions = await question_gen.agenerate(
+        question_history=question_history,
+        context_data=context_data,
+        question_count=request.generate_question_count,
+    )
+    return questions.response
+
+async def attach_question_gen(base_response: dict, request, context_data: dict) -> dict:
+    if not context_data or not isinstance(context_data, dict):
+        context_data = {}
+    if request.generate_question and request.model == consts.INDEX_LOCAL:
+        try:
+            question_gen = await local_question_gen(request, context_data)
+            base_response['question_gen'] = question_gen
+        except Exception as e:
+            logger.error(f"Error in question generation: {e}")
+            base_response['question_gen'] = "Error in question generation"
+    return base_response
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, api_key: str = Header(...)):
@@ -154,65 +182,50 @@ async def handle_sync_response(request, search, conversation_history):
             total_tokens=-1
         )
     )
-    return JSONResponse(content=jsonable_encoder(completion))
+
+    base_response = completion.to_dict()
+    final_response = await attach_question_gen(base_response, request, result.context_data)
+    return JSONResponse(content=jsonable_encoder(final_response))
 
 async def handle_stream_response(request, search, conversation_history):
     async def wrapper_astream_search():
-        token_index = 0
         chat_id = f"chatcmpl-{uuid.uuid4().hex}"
-        full_response = ""
+        context_data = None
+        tokens = []
         async for token in search.astream_search(request.messages[-1].content, conversation_history):  # 调用原始的生成器
-            if token_index == 0:
-                token_index += 1
+            if context_data is None:
+                context_data = token  # capture context info on the first token
                 continue
-
-            chunk = ChatCompletionChunk(
-                id=chat_id,
-                created=int(time.time()),
-                model=request.model,
-                object="chat.completion.chunk",
-                choices=[
-                    Choice(
-                        index=token_index - 1,
-                        finish_reason=None,
-                        delta=ChoiceDelta(
-                            role="assistant",
-                            content=token
-                        )
-                    )
-                ]
-            )
+            tokens.append(token)
+            chunk = create_chunk(chat_id, tokens, request.model)
             yield f"data: {chunk.model_dump_json()}\n\n"
-            token_index += 1
-            full_response += token
 
-        content = ""
         # TODO: add reference and modify format
         # reference = get_reference(full_response)
         # if reference:
         #     content = f"\n{generate_ref_links(reference, request.model)}"
         finish_reason = 'stop'
-        chunk = ChatCompletionChunk(
-            id=chat_id,
-            created=int(time.time()),
-            model=request.model,
-            object="chat.completion.chunk",
-            choices=[
-                Choice(
-                    index=token_index,
-                    finish_reason=finish_reason,
-                    delta=ChoiceDelta(
-                        role="assistant",
-                        # content=result.context_data["entities"].head().to_string()
-                        content=content
-                    )
-                ),
-            ],
-        )
-        yield f"data: {chunk.model_dump_json()}\n\n"
+        chunk = create_chunk(chat_id, tokens, request.model)
+        chunk.choices[0].finish_reason = finish_reason
+        chunk.choices[0].delta.content = ""
+        chunk.choices[0].index = len(tokens)
+        base_response = chunk.to_dict()  # Build a final response dict if necessary
+        final_response = await attach_question_gen(base_response, request, context_data)
+        yield f"data: {jsonable_encoder(final_response)}\n\n"
         yield f"data: [DONE]\n\n"
 
     return StreamingResponse(wrapper_astream_search(), media_type="text/event-stream")
+
+def create_chunk(chat_id, tokens, model):
+    # Minimal helper to form a ChatCompletionChunk from tokens.
+    assert tokens, "Expected at least one token in the tokens list"
+    return ChatCompletionChunk(
+        id=chat_id,
+        created=int(time.time()),
+        model=model,
+        object="chat.completion.chunk",
+        choices=[Choice(index=len(tokens)-1, finish_reason=None, delta=ChoiceDelta(role="assistant", content=tokens[-1]))]
+    )
 
 # -----------------------------------------------------------------
 @app.post("/api/local_search")
