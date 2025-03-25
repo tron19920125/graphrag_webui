@@ -31,6 +31,7 @@ from fastapi.encoders import jsonable_encoder
 from pathlib import Path
 import tiktoken
 import json
+import re
 
 load_dotenv()
 
@@ -130,6 +131,14 @@ async def attach_question_gen(base_response: dict, request, context_data: dict) 
             base_response['question_gen'] = "Error in question generation"
     return base_response
 
+def handle_reference(request:ChatCompletionRequest, response: str) -> str:
+    if not request.show_reference:
+        # Remove the reference part from the response
+        cleaned_text = re.sub(r'\[Data: [^\]]+\]', '', response)
+        return cleaned_text.strip()
+    else:
+        return response
+
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, api_key: str = Header(...)):
     
@@ -156,6 +165,7 @@ async def handle_sync_response(request, search, conversation_history):
     else:
         response = result.response
 
+    response = handle_reference(request, response) 
     # TODO: add reference and modify format
     # reference = get_reference(response)
     # if reference:
@@ -207,7 +217,7 @@ async def handle_stream_response(request, search, conversation_history):
         finish_reason = 'stop'
         chunk = create_chunk(chat_id, tokens, request.model)
         chunk.choices[0].finish_reason = finish_reason
-        chunk.choices[0].delta.content = ""
+        chunk.choices[0].delta.content = handle_reference(request, "".join(tokens))
         chunk.choices[0].index = len(tokens)
         base_response = chunk.to_dict()  # Build a final response dict if necessary
         final_response = await attach_question_gen(base_response, request, context_data)
