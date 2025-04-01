@@ -221,7 +221,7 @@ async def handle_stream_response(request, search, conversation_history):
         chunk.choices[0].index = len(tokens)
         base_response = chunk.to_dict()  # Build a final response dict if necessary
         final_response = await attach_question_gen(base_response, request, context_data)
-        yield f"data: {jsonable_encoder(final_response)}\n\n"
+        yield f"data: {json.dumps(final_response)}\n\n"
         yield f"data: [DONE]\n\n"
 
     return StreamingResponse(wrapper_astream_search(), media_type="text/event-stream")
