@@ -38,6 +38,7 @@ class CompletionCreateParamsBase(BaseModel):
     project_name: str
     community_level: int
     messages: List[ChatCompletionMessageParam]
+    system_prompt: Optional[str] = None
     model: str
     frequency_penalty: Optional[float] = None
     logit_bias: Optional[Dict[str, int]] = None

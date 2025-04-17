@@ -21,6 +21,7 @@ from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
 from graphrag.query.question_gen.local_gen import LocalQuestionGen
 from libs import search
+from libs.search import reformat_context_data
 from libs.gtypes import ChatCompletionMessageParam, ChatCompletionStreamOptionsParam, ChatCompletionToolParam, ChatQuestionGen
 from libs.gtypes import CompletionCreateParamsBase as ChatCompletionRequest, GenerateDataRequest
 from libs import consts
@@ -78,8 +79,9 @@ async def init_search_engine(request: ChatCompletionRequest):
     root = project_path(request.project_name)
     data_dir=None
     config, data = await search.load_context(root, data_dir)
+    system_prompt = request.system_prompt
     if request.model == consts.INDEX_LOCAL:
-        search_engine = await search.load_local_search_engine(config, data)
+        search_engine = await search.load_local_search_engine(config, data, system_prompt)
     elif request.model == consts.INDEX_GLOBAL:
         search_engine = await search.load_global_search_engine(config, data)
     elif request.model == consts.INDEX_DRIFT:
@@ -159,6 +161,11 @@ async def chat_completions(request: ChatCompletionRequest, api_key: str = Header
     
 async def handle_sync_response(request, search, conversation_history):
     result = await search.asearch(request.messages[-1].content, conversation_history=conversation_history)
+
+    # print context_data
+    # context_data = reformat_context_data(result.context_data)  # type: ignore
+    # logger.debug(f"context_data: {context_data}")
+
     if isinstance(search, DRIFTSearch):
         response = result.response
         response = response["nodes"][0]["answer"]
