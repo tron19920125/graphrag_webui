@@ -22,6 +22,38 @@ from libs.config import settings
 
 logger = logging.getLogger(__name__)
 
+
+def reformat_context_data(context_data: dict) -> dict:
+    """
+    Reformats context_data for all query responses.
+
+    Reformats a dictionary of dataframes into a dictionary of lists.
+    One list entry for each record. Records are grouped by original
+    dictionary keys.
+
+    Note: depending on which query algorithm is used, the context_data may not
+          contain the same information (keys). In this case, the default behavior will be to
+          set these keys as empty lists to preserve a standard output format.
+    """
+    final_format = {
+        "reports": [],
+        "entities": [],
+        "relationships": [],
+        "claims": [],
+        "sources": [],
+    }
+    for key in context_data:
+        records = (
+            context_data[key].to_dict(orient="records")
+            if context_data[key] is not None and not isinstance(context_data[key], dict)
+            else context_data[key]
+        )
+        if len(records) < 1:
+            continue
+        final_format[key] = records
+    return final_format
+
+
 async def load_context(root: Path, data_dir: Path | None = None):
     print("root in search.py: ", root)
     config = load_config(root, None)
@@ -73,7 +105,7 @@ async def resolve_output_files(config: GraphRagConfig, output_list: list[str], o
     return dataframe_dict
 
 
-async def load_local_search_engine(config: GraphRagConfig, data: dict[str, pd.DataFrame]):
+async def load_local_search_engine(config: GraphRagConfig, data: dict[str, pd.DataFrame], system_prompt: str):
     vector_store_args = config.embeddings.vector_store
     logger.info(f"Vector Store Args: {vector_store_args}")  # type: ignore # noqa
 
@@ -92,7 +124,7 @@ async def load_local_search_engine(config: GraphRagConfig, data: dict[str, pd.Da
 
     entities_ = read_indexer_entities(final_nodes, final_entities, community_level)
     covariates_ = read_indexer_covariates(final_covariates) if final_covariates else []
-    prompt = _load_search_prompt(config.root_dir, config.local_search.prompt)
+    prompt = system_prompt if system_prompt else _load_search_prompt(config.root_dir, config.local_search.prompt)
 
     search_engine = get_local_search_engine(
         config=config,
