@@ -1,5 +1,6 @@
 import time
 import requests
+import html  # 添加html模块导入
 
 import pandas as pd
 import os
@@ -71,18 +72,28 @@ def convert_file(file_path, file, project_name, pdf_vision_option):
 def excel_to_txt(file_path, project_name):
     file_name = os.path.basename(file_path)
 
+    # 使用html模块进行转义
+    def escape_text(text):
+        if isinstance(text, (int, float)):
+            return str(text)
+        text = str(text)
+        # 转义花括号为HTML实体
+        text = text.replace("{", "&#123;").replace("}", "&#125;")
+        # HTML转义其他字符
+        return html.escape(text)
+
     if file_path.endswith(".xlsx"):
         excel_data = pd.ExcelFile(file_path, engine='openpyxl')
         with open(
             f"{project_path(project_name)}/input/{file_name}.txt", "w", encoding="utf-8"
         ) as f:
             for sheet_name in excel_data.sheet_names:
-                f.write(f"{sheet_name}\n\n")
+                f.write(f"{escape_text(sheet_name)}\n\n")
                 df = excel_data.parse(sheet_name)
                 for index, row in df.iterrows():
                     for column in df.columns:
                         if pd.notna(row[column]):
-                            f.write(f"【{column}】: {row[column]} ")
+                            f.write(f"【{escape_text(column)}】: {escape_text(row[column])} ")
                     f.write(f"\n\n")
     elif file_path.endswith(".csv"):
 
@@ -91,11 +102,11 @@ def excel_to_txt(file_path, project_name):
             f"{project_path(project_name)}/input/{file_name}.txt", "w", encoding="utf-8"
         ) as f:
             for column in df.columns:
-                f.write(f"{column}\n\n")
+                f.write(f"{escape_text(column)}\n\n")
             for index, row in df.iterrows():
                 for column in df.columns:
                     if pd.notna(row[column]):
-                        f.write(f"【{column}】: {row[column]} ")
+                        f.write(f"【{escape_text(column)}】: {escape_text(row[column])} ")
                 f.write(f"\n\n")
     else:
 
@@ -105,12 +116,12 @@ def excel_to_txt(file_path, project_name):
                 f"{project_path(project_name)}/input/{file_name}.txt", "w", encoding="utf-8"
             ) as f:
                 for sheet_name in excel_data.sheet_names:
-                    f.write(f"{sheet_name}\n\n")
+                    f.write(f"{escape_text(sheet_name)}\n\n")
                     df = excel_data.parse(sheet_name)
                     for index, row in df.iterrows():
                         for column in df.columns:
                             if pd.notna(row[column]):
-                                f.write(f"【{column}】: {row[column]} ")
+                                f.write(f"【{escape_text(column)}】: {escape_text(row[column])} ")
                         f.write(f"\n\n")
         except Exception as e:
             logger.error(f"无法处理文件 {file_name}: {str(e)}")
