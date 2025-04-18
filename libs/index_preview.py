@@ -10,8 +10,6 @@ def index_preview(project_name: str):
 
         artifacts_path = config.storage.base_dir
 
-        st.write(f"artifacts_path: {artifacts_path}")
-
         with st.spinner(f'Reading ...'):
             tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
                 "👤 entities",
