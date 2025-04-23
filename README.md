@@ -6,7 +6,7 @@ Our team members:
 
 - [@Shuang](https://github.com/Shuang-MS)
 - [@Tron](https://github.com/tron19920125)
-- [@Alfred](https://github.com/richardeee)
+- [@Alfred](https://github.com/alfredzouang)
 
 ## Cloud Resources
 

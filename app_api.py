@@ -21,6 +21,7 @@ from graphrag.query.structured_search.drift_search.search import DRIFTSearch
 from graphrag.query.structured_search.global_search.search import GlobalSearch
 from graphrag.query.question_gen.local_gen import LocalQuestionGen
 from libs import search
+from libs.search import reformat_context_data
 from libs.gtypes import ChatCompletionMessageParam, ChatCompletionStreamOptionsParam, ChatCompletionToolParam, ChatQuestionGen
 from libs.gtypes import CompletionCreateParamsBase as ChatCompletionRequest, GenerateDataRequest
 from libs import consts
@@ -31,6 +32,7 @@ from fastapi.encoders import jsonable_encoder
 from pathlib import Path
 import tiktoken
 import json
+import re
 
 load_dotenv()
 
@@ -77,8 +79,9 @@ async def init_search_engine(request: ChatCompletionRequest):
     root = project_path(request.project_name)
     data_dir=None
     config, data = await search.load_context(root, data_dir)
+    system_prompt = request.system_prompt
     if request.model == consts.INDEX_LOCAL:
-        search_engine = await search.load_local_search_engine(config, data)
+        search_engine = await search.load_local_search_engine(config, data, system_prompt)
     elif request.model == consts.INDEX_GLOBAL:
         search_engine = await search.load_global_search_engine(config, data)
     elif request.model == consts.INDEX_DRIFT:
@@ -130,6 +133,14 @@ async def attach_question_gen(base_response: dict, request, context_data: dict) 
             base_response['question_gen'] = "Error in question generation"
     return base_response
 
+def handle_reference(request:ChatCompletionRequest, response: str) -> str:
+    if not request.show_reference:
+        # Remove the reference part from the response
+        cleaned_text = re.sub(r'\[Data: [^\]]+\]', '', response)
+        return cleaned_text.strip()
+    else:
+        return response
+
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, api_key: str = Header(...)):
     
@@ -150,12 +161,18 @@ async def chat_completions(request: ChatCompletionRequest, api_key: str = Header
     
 async def handle_sync_response(request, search, conversation_history):
     result = await search.asearch(request.messages[-1].content, conversation_history=conversation_history)
+
+    # print context_data
+    # context_data = reformat_context_data(result.context_data)  # type: ignore
+    # logger.debug(f"context_data: {context_data}")
+
     if isinstance(search, DRIFTSearch):
         response = result.response
         response = response["nodes"][0]["answer"]
     else:
         response = result.response
 
+    response = handle_reference(request, response) 
     # TODO: add reference and modify format
     # reference = get_reference(response)
     # if reference:
@@ -207,11 +224,11 @@ async def handle_stream_response(request, search, conversation_history):
         finish_reason = 'stop'
         chunk = create_chunk(chat_id, tokens, request.model)
         chunk.choices[0].finish_reason = finish_reason
-        chunk.choices[0].delta.content = ""
+        chunk.choices[0].delta.content = handle_reference(request, "".join(tokens))
         chunk.choices[0].index = len(tokens)
         base_response = chunk.to_dict()  # Build a final response dict if necessary
         final_response = await attach_question_gen(base_response, request, context_data)
-        yield f"data: {jsonable_encoder(final_response)}\n\n"
+        yield f"data: {json.dumps(final_response)}\n\n"
         yield f"data: [DONE]\n\n"
 
     return StreamingResponse(wrapper_astream_search(), media_type="text/event-stream")
