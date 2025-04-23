@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 import streamlit as st
-from libs.common import load_graphrag_config
+from libs.common import load_graphrag_config, project_path
+from pathlib import Path
 
 def index_preview(project_name: str):
     if st.button('Preview Index', key=f"index_preview_{project_name}", icon="🔍"):
@@ -37,7 +38,7 @@ def index_preview(project_name: str):
 
 
 def get_parquet_file(project_name:str, artifact_name: str, artifacts_path: str):
-    parquet_path = f"{artifacts_path}/{artifact_name}"
+    parquet_path = Path(project_path(project_name)) / artifacts_path / artifact_name
     
     if not os.path.exists(parquet_path):
         st.write(f"File not found: `{artifact_name}`")

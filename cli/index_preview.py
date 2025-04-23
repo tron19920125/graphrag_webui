@@ -3,6 +3,7 @@ import pandas as pd
 from cli.logger import get_logger
 from cli.types import PreviewType
 from cli.common import project_path, load_graphrag_config
+from pathlib import Path
 
 logger = get_logger('index_preview')
 
@@ -29,7 +30,7 @@ def index_preview(project_name: str, type: PreviewType):
 
 
 def get_parquet_file(project_name:str, artifact_name: str, artifacts_path: str):
-    parquet_path = f"{artifacts_path}/{artifact_name}"
+    parquet_path = Path(project_path(project_name)) / artifacts_path / artifact_name
     
     if not os.path.exists(parquet_path):
         logger.error(f"File not found: `{artifact_name}`")
